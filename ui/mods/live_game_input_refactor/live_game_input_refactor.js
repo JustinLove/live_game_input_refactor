@@ -160,6 +160,90 @@
     }
   }
 
+  self.contextualActionDown = function(holodeck, mdevent) {
+    if (self.showTimeControls()) return false
+    if (self.celestialControlActive()) return false
+
+    var startx = mdevent.offsetX;
+    var starty = mdevent.offsetY;
+    var dragCommand = "";
+    // TODO: Consider changing this once we have event timestamps.
+    // WLott is concerned that framerate dips will cause this to be wonky.
+    var now = new Date().getTime();
+    var dragTime = now + 75;
+    var queue = mdevent.shiftKey;
+
+    input.capture(holodeck.div, function (event) {
+      var eventTime = new Date().getTime();
+      if (self.showTimeControls())
+        self.endCommandMode();
+
+      if (dragCommand === "" && event.type === 'mousemove' && eventTime >= dragTime) {
+        holodeck.unitBeginGo(startx, starty, model.allowCustomFormations()).then( function(ok) {
+          dragCommand = ok;
+          if (dragCommand)
+            self.mode("command_" + dragCommand);
+        } );
+      }
+      else if ((event.type === 'mouseup') && (event.button === mdevent.button)) {
+        input.release();
+        if (dragCommand === 'move') {
+          holodeck.unitChangeCommandState(dragCommand,
+                                          event.offsetX,
+                                          event.offsetY,
+                                          queue).then(function (success) {
+            if (!success)
+              return;
+
+            input.capture(holodeck.div, function (event) {
+              if ((event.type === 'mousedown') && (event.button === mdevent.button)) {
+                input.release();
+                holodeck.unitEndCommand(dragCommand, event.offsetX, event.offsetY, queue).then(function (success) {
+                  holodeck.showCommandConfirmation(success ? dragCommand : "", event.offsetX, event.offsetY);
+                });
+                self.mode('default');
+              }
+              else if ((event.type === 'keydown') && (event.keyCode === keyboard.esc)) {
+                input.release();
+                holodeck.unitCancelCommand();
+                self.mode('default');
+              }
+            });
+            return;
+          });
+        }
+        else if (dragCommand !== "") {
+          holodeck.unitEndCommand(dragCommand, event.offsetX, event.offsetY, queue).then(function (success) {
+            holodeck.showCommandConfirmation(success ? dragCommand : "", event.offsetX, event.offsetY);
+            if (!success)
+              return;
+            var action = dragCommand.charAt(0).toUpperCase() + dragCommand.slice(1);
+            api.audio.playSound("/SE/UI/UI_Command_" + action);
+          });
+        }
+        else {
+          holodeck.unitGo(startx, starty, queue).then(function (action) {
+            holodeck.showCommandConfirmation(action, event.offsetX, event.offsetY);
+            if (!action || (action === 'move')) {
+              // Note: move currently plays its own sound.
+              return;
+            }
+            var action = action.charAt(0).toUpperCase() + action.slice(1);
+            api.audio.playSound("/SE/UI/UI_Command_" + action);
+          });
+          self.mode('default');
+        }
+      }
+      else if ((event.type === 'keydown') && (event.keyCode === keyboard.esc)) {
+        input.release();
+        holodeck.unitCancelCommand();
+        self.mode('default');
+      }
+    });
+
+    return true;
+  }
+
   self.holodeckModeMouseDown['default'] = function (holodeck, mdevent) {
     console.log('my holodeckModeMouseDown.default')
     if (mdevent.button === 0) {
@@ -170,86 +254,8 @@
       }
       return true;
     }
-    else if ((mdevent.button === 2) && (!self.showTimeControls())) {
-      if (model.celestialControlActive())
-        return false;
-
-      var startx = mdevent.offsetX;
-      var starty = mdevent.offsetY;
-      var dragCommand = "";
-      // TODO: Consider changing this once we have event timestamps.
-      // WLott is concerned that framerate dips will cause this to be wonky.
-      var now = new Date().getTime();
-      var dragTime = now + 75;
-      var queue = mdevent.shiftKey;
-
-      input.capture(holodeck.div, function (event) {
-        var eventTime = new Date().getTime();
-        if (self.showTimeControls())
-          self.endCommandMode();
-
-        if (dragCommand === "" && event.type === 'mousemove' && eventTime >= dragTime)
-          {
-            holodeck.unitBeginGo(startx, starty, model.allowCustomFormations()).then( function(ok) {
-              dragCommand = ok;
-              if (dragCommand)
-                self.mode("command_" + dragCommand);
-            } );
-          }
-          else if ((event.type === 'mouseup') && (event.button === mdevent.button)) {
-            input.release();
-            if (dragCommand === 'move') {
-              holodeck.unitChangeCommandState(dragCommand, event.offsetX, event.offsetY, queue).then(function (success) {
-                if (!success)
-                  return;
-
-                input.capture(holodeck.div, function (event) {
-                  if ((event.type === 'mousedown') && (event.button === mdevent.button)) {
-                    input.release();
-                    holodeck.unitEndCommand(dragCommand, event.offsetX, event.offsetY, queue).then(function (success) {
-                      holodeck.showCommandConfirmation(success ? dragCommand : "", event.offsetX, event.offsetY);
-                    });
-                    self.mode('default');
-                  }
-                  else if ((event.type === 'keydown') && (event.keyCode === keyboard.esc)) {
-                    input.release();
-                    holodeck.unitCancelCommand();
-                    self.mode('default');
-                  }
-                });
-                return;
-              });
-            }
-            else if (dragCommand !== "") {
-              holodeck.unitEndCommand(dragCommand, event.offsetX, event.offsetY, queue).then(function (success) {
-                holodeck.showCommandConfirmation(success ? dragCommand : "", event.offsetX, event.offsetY);
-                if (!success)
-                  return;
-                var action = dragCommand.charAt(0).toUpperCase() + dragCommand.slice(1);
-                api.audio.playSound("/SE/UI/UI_Command_" + action);
-              });
-            }
-            else {
-              holodeck.unitGo(startx, starty, queue).then(function (action) {
-                holodeck.showCommandConfirmation(action, event.offsetX, event.offsetY);
-                if (!action || (action === 'move')) {
-                  // Note: move currently plays its own sound.
-                  return;
-                }
-                var action = action.charAt(0).toUpperCase() + action.slice(1);
-                api.audio.playSound("/SE/UI/UI_Command_" + action);
-              });
-              self.mode('default');
-            }
-          }
-          else if ((event.type === 'keydown') && (event.keyCode === keyboard.esc)) {
-            input.release();
-            holodeck.unitCancelCommand();
-            self.mode('default');
-          }
-      });
-
-      return true;
+    else if (mdevent.button === 2) {
+      return self.contextualActionDown(holodeck, mdevent)
     }
     return false;
   };
