@@ -348,7 +348,6 @@
   self.holodeckModeMouseDown = {};
 
   self.holodeckModeMouseDown.fab = function (holodeck, mdevent) {
-    console.log('my holodeckModeMouseDown.fab')
     if (mdevent.button === LeftButton) {
       self.beginFabDown(holodeck, mdevent)
       return true;
@@ -361,7 +360,6 @@
   };
 
   self.holodeckModeMouseDown['default'] = function (holodeck, mdevent) {
-    console.log('my holodeckModeMouseDown.default')
     if (mdevent.button === LeftButton) {
       if (model.celestialControlActive()) {
         self.celestialTargetDown(holdeck, mdevent)
@@ -378,7 +376,6 @@
 
   var holodeckCommandMouseDown = function (command, targetable) {
     return function (holodeck, mdevent) {
-      console.log('my holodeckCommandMouseDown', command)
       if (mdevent.button === LeftButton) {
         self.commandModeDown(holodeck, mdevent, command, targetable)
         return true;
@@ -396,7 +393,6 @@
   $('holodeck').off('mousedown')
 
   $('holodeck').mousedown(function (mdevent) {
-    console.log('my $holodeck.mousedown')
     if (mdevent.target.nodeName !== 'HOLODECK')
       return;
 
