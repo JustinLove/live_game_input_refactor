@@ -376,7 +376,7 @@
       self.mode('camera');
       holodeck.beginControlCamera();
       input.capture(holodeck.div, function (event) {
-        var mouseDone = ((event.type === 'mouseup') && (mdevent.button === 1));
+        var mouseDone = ((event.type === 'mouseup') && (event.button === 1));
         var escKey = ((event.type === 'keydown') && (event.keyCode === keyboard.esc));
         if (mouseDone || escKey) {
           input.release();
