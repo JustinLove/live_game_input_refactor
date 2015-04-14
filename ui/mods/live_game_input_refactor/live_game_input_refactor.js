@@ -14,8 +14,6 @@
     else
       return '';
   };
-  
-  self.holodeckModeMouseDown = {};
 
   self.beginFabDown = function(holodeck, mdevent) {
     var queue = mdevent.shiftKey;
@@ -58,19 +56,6 @@
       }
     });
   }
-
-  self.holodeckModeMouseDown.fab = function (holodeck, mdevent) {
-    console.log('my holodeckModeMouseDown.fab')
-    if (mdevent.button === 0) {
-      self.beginFabDown(holodeck, mdevent)
-      return true;
-    }
-    else if (mdevent.button === 2) {
-      self.endFabMode();
-      return true;
-    }
-    return false;
-  };
 
   var holodeckOnSelect = function (wasSelected, prevSelection, promise) {
     return promise.then(function (selection) {
@@ -244,22 +229,6 @@
     return true;
   }
 
-  self.holodeckModeMouseDown['default'] = function (holodeck, mdevent) {
-    console.log('my holodeckModeMouseDown.default')
-    if (mdevent.button === 0) {
-      if (model.celestialControlActive()) {
-        self.celestialTargetDown(holdeck, mdevent)
-      } else {
-        self.selectDown(holodeck, mdevent)
-      }
-      return true;
-    }
-    else if (mdevent.button === 2) {
-      return self.contextualActionDown(holodeck, mdevent)
-    }
-    return false;
-  };
-
   self.commandModeDown = function(holodeck, mdevent, command, targetable) {
     engine.call('camera.cameraMaybeSetFocusPlanet');
     var startx = mdevent.offsetX;
@@ -355,6 +324,37 @@
       }
     });
   }
+
+  self.holodeckModeMouseDown = {};
+
+  self.holodeckModeMouseDown.fab = function (holodeck, mdevent) {
+    console.log('my holodeckModeMouseDown.fab')
+    if (mdevent.button === 0) {
+      self.beginFabDown(holodeck, mdevent)
+      return true;
+    }
+    else if (mdevent.button === 2) {
+      self.endFabMode();
+      return true;
+    }
+    return false;
+  };
+
+  self.holodeckModeMouseDown['default'] = function (holodeck, mdevent) {
+    console.log('my holodeckModeMouseDown.default')
+    if (mdevent.button === 0) {
+      if (model.celestialControlActive()) {
+        self.celestialTargetDown(holdeck, mdevent)
+      } else {
+        self.selectDown(holodeck, mdevent)
+      }
+      return true;
+    }
+    else if (mdevent.button === 2) {
+      return self.contextualActionDown(holodeck, mdevent)
+    }
+    return false;
+  };
 
   var holodeckCommandMouseDown = function (command, targetable) {
     return function (holodeck, mdevent) {
