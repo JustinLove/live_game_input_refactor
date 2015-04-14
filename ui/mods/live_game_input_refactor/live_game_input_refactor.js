@@ -341,15 +341,19 @@
     });
   }
 
+  var LeftButton = 0
+  var MiddleButton = 1
+  var RightButton = 2
+
   self.holodeckModeMouseDown = {};
 
   self.holodeckModeMouseDown.fab = function (holodeck, mdevent) {
     console.log('my holodeckModeMouseDown.fab')
-    if (mdevent.button === 0) {
+    if (mdevent.button === LeftButton) {
       self.beginFabDown(holodeck, mdevent)
       return true;
     }
-    else if (mdevent.button === 2) {
+    else if (mdevent.button === RightButton) {
       self.endFabMode();
       return true;
     }
@@ -358,7 +362,7 @@
 
   self.holodeckModeMouseDown['default'] = function (holodeck, mdevent) {
     console.log('my holodeckModeMouseDown.default')
-    if (mdevent.button === 0) {
+    if (mdevent.button === LeftButton) {
       if (model.celestialControlActive()) {
         self.celestialTargetDown(holdeck, mdevent)
       } else {
@@ -366,7 +370,7 @@
       }
       return true;
     }
-    else if (mdevent.button === 2) {
+    else if (mdevent.button === RightButton) {
       return self.contextualActionDown(holodeck, mdevent)
     }
     return false;
@@ -375,7 +379,7 @@
   var holodeckCommandMouseDown = function (command, targetable) {
     return function (holodeck, mdevent) {
       console.log('my holodeckCommandMouseDown', command)
-      if (mdevent.button === 0) {
+      if (mdevent.button === LeftButton) {
         self.commandModeDown(holodeck, mdevent, command, targetable)
         return true;
       }
@@ -405,14 +409,14 @@
       return;
     }
 
-    if (mdevent.button === 1) { // middle click
+    if (mdevent.button === MiddleButton) {
       self.holdMousePan(holodeck, mdevent)
       mdevent.preventDefault();
       mdevent.stopPropagation();
       return;
     }
 
-    if (mdevent.button === 2 && self.mode() !== 'default') { // right click
+    if (mdevent.button === RightButton && self.mode() !== 'default') {
       self.endCommandMode()
     }
   });
