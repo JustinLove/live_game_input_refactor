@@ -1,0 +1,20 @@
+{
+  "author": "wondible",
+  "build": "80187",
+  "category": ["ui", "framework"],
+  "context": "client",
+  "date": "2015/04/14",
+  "description": "Replaces big knarly functions with small moddable ones.",
+  "display_name": "Live Game Input Refactor",
+  "forum": null,
+  "identifier": "com.wondible.pa.live_game_input_refactor",
+  "priority": 100,
+  "scenes": {
+    "live_game": [
+      "coui://ui/mods/live_game_input_refactor/live_game_input_refactor.js"
+    ]
+  },
+  "signature": "not yet implemented",
+  "version": "0.1.0"
+}
+
