@@ -325,6 +325,22 @@
     });
   }
 
+  self.holdMousePan = function(holodeck, mdevent) {
+    var oldMode = self.mode();
+    self.mode('camera');
+    holodeck.beginControlCamera();
+    input.capture(holodeck.div, function (event) {
+      var mouseDone = ((event.type === 'mouseup') && (event.button === mdevent.button));
+      var escKey = ((event.type === 'keydown') && (event.keyCode === keyboard.esc));
+      if (mouseDone || escKey) {
+        input.release();
+        holodeck.endControlCamera();
+        if (self.mode() === 'camera')
+          self.mode(oldMode);
+      }
+    });
+  }
+
   self.holodeckModeMouseDown = {};
 
   self.holodeckModeMouseDown.fab = function (holodeck, mdevent) {
@@ -389,28 +405,14 @@
       return;
     }
 
-    if (mdevent.button === 1) // middle click
-    {
-      var oldMode = self.mode();
-      self.mode('camera');
-      holodeck.beginControlCamera();
-      input.capture(holodeck.div, function (event) {
-        var mouseDone = ((event.type === 'mouseup') && (event.button === mdevent.button));
-        var escKey = ((event.type === 'keydown') && (event.keyCode === keyboard.esc));
-        if (mouseDone || escKey) {
-          input.release();
-          holodeck.endControlCamera();
-          if (self.mode() === 'camera')
-            self.mode(oldMode);
-        }
-      });
+    if (mdevent.button === 1) { // middle click
+      self.holdMousePan(holodeck, mdevent)
       mdevent.preventDefault();
       mdevent.stopPropagation();
       return;
     }
 
-    if (mdevent.button === 2 && self.mode() !== 'default') // right click
-    {
+    if (mdevent.button === 2 && self.mode() !== 'default') { // right click
       self.endCommandMode()
     }
   });
