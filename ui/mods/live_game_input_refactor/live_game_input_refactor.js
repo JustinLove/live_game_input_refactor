@@ -40,7 +40,7 @@
       holodeck.unitBeginFab(beginFabX, beginFabY, beginSnap);
       self.mode('fab_rotate');
       input.capture(holodeck.div, function (event) {
-        if ((event.type === 'mouseup') && (event.button === 0)) {
+        if ((event.type === 'mouseup') && (event.button === mdevent.button)) {
           var snap = !event.ctrlKey;
           holodeck.unitEndFab(event.offsetX, event.offsetY, queue, snap).then(function (success) {
             holodeck.showCommandConfirmation("", event.offsetX, event.offsetY);
@@ -89,7 +89,7 @@
           model.celestialControlModel.mousedown(mdevent);
 
           input.capture($('body'), function (event) {
-            if (event.type === 'mouseup' && event.button === 0) {
+            if (event.type === 'mouseup' && event.button === mdevent.button) {
               model.celestialControlModel.mouseup(event);
               input.release();
             }
@@ -123,7 +123,7 @@
             holodeck.beginDragSelect(startx, starty);
             delete holodeck.doubleClickTime;
           }
-          else if ((event.type === 'mouseup') && (event.button === 0)) {
+          else if ((event.type === 'mouseup') && (event.button === mdevent.button)) {
 
             input.release();
             var option = getSelectOption(event);
@@ -186,7 +186,7 @@
                 self.mode("command_" + dragCommand);
             } );
           }
-          else if ((event.type === 'mouseup') && (event.button === 2)) {
+          else if ((event.type === 'mouseup') && (event.button === mdevent.button)) {
             input.release();
             if (dragCommand === 'move') {
               holodeck.unitChangeCommandState(dragCommand, event.offsetX, event.offsetY, queue).then(function (success) {
@@ -194,7 +194,7 @@
                   return;
 
                 input.capture(holodeck.div, function (event) {
-                  if ((event.type === 'mousedown') && (event.button === 2)) {
+                  if ((event.type === 'mousedown') && (event.button === mdevent.button)) {
                     input.release();
                     holodeck.unitEndCommand(dragCommand, event.offsetX, event.offsetY, queue).then(function (success) {
                       holodeck.showCommandConfirmation(success ? dragCommand : "", event.offsetX, event.offsetY);
@@ -290,7 +290,7 @@
           else if (!dragging && event.type === 'mousemove' && eventTime >= dragTime) {
             holodeck.unitBeginCommand(command, startx, starty).then(function (ok) { dragging = ok; });
           }
-          else if ((event.type === 'mouseup') && (event.button === 0)) {
+          else if ((event.type === 'mouseup') && (event.button === mdevent.button)) {
             input.release();
             if (dragging && (command === 'move' || command === 'unload')) {
               holodeck.unitChangeCommandState(command, event.offsetX, event.offsetY, queue).then(function (success) {
@@ -298,7 +298,7 @@
                   return;
                 // move and unload have extra input for their area command so recapture for it
                 input.capture(holodeck.div, function (event) {
-                  if ((event.type === 'mousedown') && (event.button === 0)) {
+                  if ((event.type === 'mousedown') && (event.button === mdevent.button)) {
                     input.release();
                     holodeck.unitEndCommand(command, event.offsetX, event.offsetY, queue).then(playSound);
                     if (!queue)
@@ -376,7 +376,7 @@
       self.mode('camera');
       holodeck.beginControlCamera();
       input.capture(holodeck.div, function (event) {
-        var mouseDone = ((event.type === 'mouseup') && (event.button === 1));
+        var mouseDone = ((event.type === 'mouseup') && (event.button === mdevent.button));
         var escKey = ((event.type === 'keydown') && (event.keyCode === keyboard.esc));
         if (mouseDone || escKey) {
           input.release();
