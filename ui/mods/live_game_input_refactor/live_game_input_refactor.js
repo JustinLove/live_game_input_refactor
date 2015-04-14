@@ -1,5 +1,20 @@
 (function() {
   var self = model
+
+  var getSelectOption = function(event) {
+    if (event.shiftKey)
+    {
+      if (event.ctrlKey)
+        return 'remove';
+      else
+        return 'add';
+    }
+    else if (event.ctrlKey)
+      return 'toggle';
+    else
+      return '';
+  };
+  
   var holodeckModeMouseDown = {};
 
   holodeckModeMouseDown.fab = function (holodeck, mdevent) {
@@ -54,7 +69,6 @@
   };
 
   var holodeckOnSelect = function (wasSelected, prevSelection, promise) {
-    console.log('my holodeckOnSelect')
     return promise.then(function (selection) {
       if (selection) {
         var jSelection = JSON.parse(selection);
@@ -338,6 +352,9 @@
     var targetable = self.targetableCommands()[i];
     holodeckModeMouseDown['command_' + command] = holodeckCommandMouseDown(command, targetable);
   }
+
+  //  :-( :-( :-(
+  $('holodeck').off('mousedown')
 
   $('holodeck').mousedown(function (mdevent) {
     console.log('my $holodeck.mousedown')
