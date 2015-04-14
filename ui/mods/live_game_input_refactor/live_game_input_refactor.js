@@ -15,9 +15,9 @@
       return '';
   };
   
-  var holodeckModeMouseDown = {};
+  self.holodeckModeMouseDown = {};
 
-  holodeckModeMouseDown.fab = function (holodeck, mdevent) {
+  self.holodeckModeMouseDown.fab = function (holodeck, mdevent) {
     console.log('my holodeckModeMouseDown.fab')
     if (mdevent.button === 0) {
       var queue = mdevent.shiftKey;
@@ -81,7 +81,7 @@
     });
   };
 
-  holodeckModeMouseDown['default'] = function (holodeck, mdevent) {
+  self.holodeckModeMouseDown['default'] = function (holodeck, mdevent) {
     console.log('my holodeckModeMouseDown.default')
     if (mdevent.button === 0) {
       if (model.celestialControlActive()) {
@@ -350,7 +350,7 @@
   for (var i = 0; i < self.commands().length; ++i) {
     var command = self.commands()[i];
     var targetable = self.targetableCommands()[i];
-    holodeckModeMouseDown['command_' + command] = holodeckCommandMouseDown(command, targetable);
+    self.holodeckModeMouseDown['command_' + command] = holodeckCommandMouseDown(command, targetable);
   }
 
   //  :-( :-( :-(
@@ -363,7 +363,7 @@
 
     var holodeck = api.Holodeck.get(this);
 
-    var handler = holodeckModeMouseDown[self.mode()];
+    var handler = self.holodeckModeMouseDown[self.mode()];
     if (handler && handler(holodeck, mdevent)) {
       mdevent.preventDefault();
       mdevent.stopPropagation();
