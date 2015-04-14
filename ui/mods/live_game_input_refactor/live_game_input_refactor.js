@@ -145,6 +145,14 @@
     }
   }
 
+  self.standardDown = function(holodeck, mdevent) {
+    if (model.celestialControlActive()) {
+      self.celestialTargetDown(holodeck, mdevent)
+    } else {
+      self.selectDown(holodeck, mdevent)
+    }
+  }
+
   self.contextualActionDown = function(holodeck, mdevent) {
     if (self.showTimeControls()) return false
     if (self.celestialControlActive()) return false
@@ -361,11 +369,7 @@
 
   self.holodeckModeMouseDown['default'] = function (holodeck, mdevent) {
     if (mdevent.button === LeftButton) {
-      if (model.celestialControlActive()) {
-        self.celestialTargetDown(holdeck, mdevent)
-      } else {
-        self.selectDown(holodeck, mdevent)
-      }
+      self.standardDown(holodeck, mdevent)
       return true;
     }
     else if (mdevent.button === RightButton) {
