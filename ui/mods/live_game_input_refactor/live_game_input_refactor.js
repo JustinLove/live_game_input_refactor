@@ -17,48 +17,52 @@
   
   self.holodeckModeMouseDown = {};
 
+  self.beginFabDown = function(holodeck, mdevent) {
+    var queue = mdevent.shiftKey;
+    model.fabCount(model.fabCount() + 1);
+    if (queue && (model.fabCount() === 1)) {
+      var shiftWatch = function (keyEvent) {
+        if (!keyEvent.shiftKey) {
+          $('body').off('keyup', shiftWatch);
+          if (self.mode() === 'fab')
+            self.endFabMode();
+          else if (self.mode() === 'fab_rotate')
+            self.mode('fab_end');
+        }
+      };
+      $('body').on('keyup', shiftWatch);
+    }
+    var beginFabX = mdevent.offsetX;
+    var beginFabY = mdevent.offsetY;
+    var beginSnap = !mdevent.ctrlKey;
+    holodeck.unitBeginFab(beginFabX, beginFabY, beginSnap);
+    self.mode('fab_rotate');
+    input.capture(holodeck.div, function (event) {
+      if ((event.type === 'mouseup') && (event.button === mdevent.button)) {
+        var snap = !event.ctrlKey;
+        holodeck.unitEndFab(event.offsetX, event.offsetY, queue, snap).then(function (success) {
+          holodeck.showCommandConfirmation("", event.offsetX, event.offsetY);
+          if (success)
+            api.audio.playSound("/SE/UI/UI_Building_place");
+        });
+        queue &= (self.mode() !== 'fab_end');
+        self.mode('fab');
+        input.release();
+        if (!queue)
+          self.endFabMode();
+      }
+      else if ((event.type === 'keydown') && (event.keyCode === keyboard.esc)) {
+        input.release();
+        holodeck.unitCancelFab();
+        self.endFabMode();
+      }
+    });
+  }
+
   self.holodeckModeMouseDown.fab = function (holodeck, mdevent) {
     console.log('my holodeckModeMouseDown.fab')
     if (mdevent.button === 0) {
-      var queue = mdevent.shiftKey;
-      model.fabCount(model.fabCount() + 1);
-      if (queue && (model.fabCount() === 1)) {
-        var shiftWatch = function (keyEvent) {
-          if (!keyEvent.shiftKey) {
-            $('body').off('keyup', shiftWatch);
-            if (self.mode() === 'fab')
-              self.endFabMode();
-            else if (self.mode() === 'fab_rotate')
-              self.mode('fab_end');
-          }
-        };
-        $('body').on('keyup', shiftWatch);
-      }
-      var beginFabX = mdevent.offsetX;
-      var beginFabY = mdevent.offsetY;
-      var beginSnap = !mdevent.ctrlKey;
-      holodeck.unitBeginFab(beginFabX, beginFabY, beginSnap);
-      self.mode('fab_rotate');
-      input.capture(holodeck.div, function (event) {
-        if ((event.type === 'mouseup') && (event.button === mdevent.button)) {
-          var snap = !event.ctrlKey;
-          holodeck.unitEndFab(event.offsetX, event.offsetY, queue, snap).then(function (success) {
-            holodeck.showCommandConfirmation("", event.offsetX, event.offsetY);
-            if (success)
-              api.audio.playSound("/SE/UI/UI_Building_place");
-          });
-          queue &= (self.mode() !== 'fab_end');
-          self.mode('fab');
-          input.release();
-          if (!queue)
-            self.endFabMode();
-        }
-        else if ((event.type === 'keydown') && (event.keyCode === keyboard.esc)) {
-          input.release();
-          holodeck.unitCancelFab();
-          self.endFabMode();
-        }
-      });
+      self.beginFabDown(holodeck, mdevent)
       return true;
     }
     else if (mdevent.button === 2) {
