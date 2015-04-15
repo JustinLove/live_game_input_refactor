@@ -15,8 +15,24 @@
       return '';
   };
 
+  self.endQueueWatchEvent = 'keyup'
   self.shouldQueueCommand = function(event) {
     return event.shiftKey
+  }
+
+  self.checkQueueAndWatchForEnd = function(mdevent, counter, onEnd) {
+    var queue = self.shouldQueueCommand(mdevent)
+    counter(counter() + 1);
+    if (queue && (counter() === 1)) {
+      var queueWatch = function (keyEvent) {
+        if (!self.shouldQueueCommand(keyEvent)) {
+          $('body').off(self.endQueueWatchEvent, queueWatch);
+          onEnd()
+        }
+      };
+      $('body').on(self.endQueueWatchEvent, queueWatch);
+    }
+    return queue
   }
 
   self.shouldSnap = function(event) {
@@ -24,20 +40,12 @@
   }
 
   self.beginFabDown = function(holodeck, mdevent) {
-    var queue = self.shouldQueueCommand(mdevent)
-    model.fabCount(model.fabCount() + 1);
-    if (queue && (model.fabCount() === 1)) {
-      var queueWatch = function (keyEvent) {
-        if (!self.shouldQueueCommand(keyEvent)) {
-          $('body').off('keyup', queueWatch);
-          if (self.mode() === 'fab')
-            self.endFabMode();
-          else if (self.mode() === 'fab_rotate')
-            self.mode('fab_end');
-        }
-      };
-      $('body').on('keyup', queueWatch);
-    }
+    var queue = self.checkQueueAndWatchForEnd(mdevent, model.fabCount, function() {
+      if (self.mode() === 'fab')
+        self.endFabMode();
+      else if (self.mode() === 'fab_rotate')
+        self.mode('fab_end');
+    })
     var beginFabX = mdevent.offsetX;
     var beginFabY = mdevent.offsetY;
     var beginSnap = self.shouldSnap(mdevent)
@@ -254,17 +262,7 @@
     // WLott is concerned that framerate dips will cause this to be wonky.
     var now = new Date().getTime();
     var dragTime = now + 125;
-    var queue = self.shouldQueueCommand(mdevent)
-    model.cmdQueueCount(model.cmdQueueCount() + 1);
-    if (queue && (model.cmdQueueCount() === 1)) {
-      var queueWatch = function (keyEvent) {
-        if (!self.shouldQueueCommand(keyEvent)) {
-          $('body').off('keyup', queueWatch);
-          self.endCommandMode();
-        }
-      };
-      $('body').on('keyup', queueWatch);
-    }
+    var queue = self.checkQueueAndWatchForEnd(mdevent, model.cmdQueueCount, self.endCommandMode)
 
     input.capture(holodeck.div, function (event) {
       var playSound = function (success) {
