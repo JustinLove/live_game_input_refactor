@@ -106,10 +106,10 @@
     var now = new Date().getTime();
     if (holodeck.hasOwnProperty('doubleClickId') && (now < holodeck.doubleClickTime)) {
       holodeckOnSelect(self.hasSelection(), self.selection(),
-                       holodeck.selectMatchingUnits(self.getSelectOption(mdevent), [holodeck.doubleClickId])
-                      );
-                      delete holodeck.doubleClickTime;
-                      delete holodeck.doubleClickId;
+        holodeck.selectMatchingUnits(self.getSelectOption(mdevent), [holodeck.doubleClickId])
+      );
+      delete holodeck.doubleClickTime;
+      delete holodeck.doubleClickId;
     }
     else {
       self.mode('select');
