@@ -399,13 +399,7 @@
     self.holodeckModeMouseDown['command_' + command] = holodeckCommandMouseDown(command, targetable);
   }
 
-  //  :-( :-( :-(
-  $('holodeck').off('mousedown')
-
-  $('holodeck').mousedown(function (mdevent) {
-    if (mdevent.target.nodeName !== 'HOLODECK')
-      return;
-
+  self.holodeckMouseDown = function (mdevent) {
     var holodeck = api.Holodeck.get(this);
 
     var handler = self.holodeckModeMouseDown[self.mode()];
@@ -425,5 +419,15 @@
     if (mdevent.button === RightButton && self.mode() !== 'default') {
       self.endCommandMode()
     }
+  }
+
+  //  :-( :-( :-(
+  $('holodeck').off('mousedown')
+
+  $('holodeck').mousedown(function(mdevent) {
+    if (mdevent.target.nodeName !== 'HOLODECK')
+      return;
+
+    self.holodeckMouseDown.apply(this, arguments)
   });
 })()
