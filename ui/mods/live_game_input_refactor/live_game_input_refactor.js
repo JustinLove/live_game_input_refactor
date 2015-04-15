@@ -1,7 +1,7 @@
 (function() {
   var self = model
 
-  var getSelectOption = function(event) {
+  self.getSelectOption = function(event) {
     if (event.shiftKey)
     {
       if (event.ctrlKey)
@@ -15,29 +15,37 @@
       return '';
   };
 
+  self.shouldQueueCommand = function(event) {
+    return event.shiftKey
+  }
+
+  self.shouldSnap = function(event) {
+    return !event.ctrlKey
+  }
+
   self.beginFabDown = function(holodeck, mdevent) {
-    var queue = mdevent.shiftKey;
+    var queue = self.shouldQueueCommand(mdevent)
     model.fabCount(model.fabCount() + 1);
     if (queue && (model.fabCount() === 1)) {
-      var shiftWatch = function (keyEvent) {
-        if (!keyEvent.shiftKey) {
-          $('body').off('keyup', shiftWatch);
+      var queueWatch = function (keyEvent) {
+        if (!self.shouldQueueCommand(keyEvent)) {
+          $('body').off('keyup', queueWatch);
           if (self.mode() === 'fab')
             self.endFabMode();
           else if (self.mode() === 'fab_rotate')
             self.mode('fab_end');
         }
       };
-      $('body').on('keyup', shiftWatch);
+      $('body').on('keyup', queueWatch);
     }
     var beginFabX = mdevent.offsetX;
     var beginFabY = mdevent.offsetY;
-    var beginSnap = !mdevent.ctrlKey;
+    var beginSnap = self.shouldSnap(mdevent)
     holodeck.unitBeginFab(beginFabX, beginFabY, beginSnap);
     self.mode('fab_rotate');
     input.capture(holodeck.div, function (event) {
       if ((event.type === 'mouseup') && (event.button === mdevent.button)) {
-        var snap = !event.ctrlKey;
+        var snap = self.shouldSnap(event)
         holodeck.unitEndFab(event.offsetX, event.offsetY, queue, snap).then(function (success) {
           holodeck.showCommandConfirmation("", event.offsetX, event.offsetY);
           if (success)
@@ -90,7 +98,7 @@
     var now = new Date().getTime();
     if (holodeck.hasOwnProperty('doubleClickId') && (now < holodeck.doubleClickTime)) {
       holodeckOnSelect(self.hasSelection(), self.selection(),
-                       holodeck.selectMatchingUnits(getSelectOption(mdevent), [holodeck.doubleClickId])
+                       holodeck.selectMatchingUnits(self.getSelectOption(mdevent), [holodeck.doubleClickId])
                       );
                       delete holodeck.doubleClickTime;
                       delete holodeck.doubleClickId;
@@ -112,7 +120,7 @@
         else if ((event.type === 'mouseup') && (event.button === mdevent.button)) {
 
           input.release();
-          var option = getSelectOption(event);
+          var option = self.getSelectOption(event);
           if (dragging)
             holodeckOnSelect(wasSelected, prevSelection,
                              holodeck.endDragSelect(option, { left: startx, top: starty, right: event.offsetX, bottom: event.offsetY })
@@ -164,7 +172,7 @@
     // WLott is concerned that framerate dips will cause this to be wonky.
     var now = new Date().getTime();
     var dragTime = now + 75;
-    var queue = mdevent.shiftKey;
+    var queue = self.shouldQueueCommand(mdevent)
 
     input.capture(holodeck.div, function (event) {
       var eventTime = new Date().getTime();
@@ -246,16 +254,16 @@
     // WLott is concerned that framerate dips will cause this to be wonky.
     var now = new Date().getTime();
     var dragTime = now + 125;
-    var queue = mdevent.shiftKey;
+    var queue = self.shouldQueueCommand(mdevent)
     model.cmdQueueCount(model.cmdQueueCount() + 1);
     if (queue && (model.cmdQueueCount() === 1)) {
-      var shiftWatch = function (keyEvent) {
-        if (!keyEvent.shiftKey) {
-          $('body').off('keyup', shiftWatch);
+      var queueWatch = function (keyEvent) {
+        if (!self.shouldQueueCommand(keyEvent)) {
+          $('body').off('keyup', queueWatch);
           self.endCommandMode();
         }
       };
-      $('body').on('keyup', shiftWatch);
+      $('body').on('keyup', queueWatch);
     }
 
     input.capture(holodeck.div, function (event) {
