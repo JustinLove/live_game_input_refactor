@@ -46,10 +46,12 @@
       else if (self.mode() === 'fab_rotate')
         self.mode('fab_end');
     })
-    var beginFabX = mdevent.offsetX;
-    var beginFabY = mdevent.offsetY;
-    var beginSnap = self.shouldSnap(mdevent)
-    holodeck.unitBeginFab(beginFabX, beginFabY, beginSnap);
+
+    holodeck.unitBeginFab(
+      mdevent.offsetX,
+      mdevent.offsetY,
+      self.shouldSnap(mdevent))
+
     self.mode('fab_rotate');
     input.capture(holodeck.div, function (event) {
       if ((event.type === 'mouseup') && (event.button === mdevent.button)) {
