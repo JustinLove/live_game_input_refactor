@@ -181,19 +181,19 @@
 
     var startx = mdevent.offsetX;
     var starty = mdevent.offsetY;
-    var dragCommand = "";
+    var queue = self.shouldQueueCommand(mdevent)
+
     // TODO: Consider changing this once we have event timestamps.
     // WLott is concerned that framerate dips will cause this to be wonky.
-    var now = new Date().getTime();
-    var dragTime = now + 75;
-    var queue = self.shouldQueueCommand(mdevent)
+    var dragTime = new Date().getTime() + 75;
+    var dragCommand = "";
 
     input.capture(holodeck.div, function (event) {
       var eventTime = new Date().getTime();
       if (self.showTimeControls())
         self.endCommandMode();
 
-      if (dragCommand === "" && event.type === 'mousemove' && eventTime >= dragTime) {
+      if (event.type === 'mousemove' && dragCommand === "" && eventTime >= dragTime) {
         holodeck.unitBeginGo(startx, starty, model.allowCustomFormations()).then( function(ok) {
           dragCommand = ok;
           if (dragCommand)
