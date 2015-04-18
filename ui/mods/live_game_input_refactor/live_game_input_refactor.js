@@ -39,6 +39,19 @@
     return !event.ctrlKey
   }
 
+  self.completeFabRotate = function(holodeck, queue, event) {
+    var snap = self.shouldSnap(event)
+    holodeck.unitEndFab(event.offsetX, event.offsetY, queue, snap).then(function (success) {
+      holodeck.showCommandConfirmation("", event.offsetX, event.offsetY);
+      if (success)
+        api.audio.playSound("/SE/UI/UI_Building_place");
+    });
+    if (self.mode() === 'fab_end') queue = false;
+    self.mode('fab');
+    if (!queue)
+      self.endFabMode();
+  }
+
   self.beginFabDown = function(holodeck, mdevent) {
     var queue = self.checkQueueAndWatchForEnd(mdevent, model.fabCount, function() {
       if (self.mode() === 'fab')
@@ -55,17 +68,8 @@
     self.mode('fab_rotate');
     input.capture(holodeck.div, function (event) {
       if ((event.type === 'mouseup') && (event.button === mdevent.button)) {
-        var snap = self.shouldSnap(event)
-        holodeck.unitEndFab(event.offsetX, event.offsetY, queue, snap).then(function (success) {
-          holodeck.showCommandConfirmation("", event.offsetX, event.offsetY);
-          if (success)
-            api.audio.playSound("/SE/UI/UI_Building_place");
-        });
-        queue &= (self.mode() !== 'fab_end');
-        self.mode('fab');
         input.release();
-        if (!queue)
-          self.endFabMode();
+        self.completeFabRotate(holodeck, queue, event)
       }
       else if ((event.type === 'keydown') && (event.keyCode === keyboard.esc)) {
         input.release();
