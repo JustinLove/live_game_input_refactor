@@ -105,65 +105,78 @@
     }
   }
 
-  self.selectDown = function(holodeck, mdevent) {
+  self.selectSingleClick = function(holodeck, mdevent) {
     var startx = mdevent.offsetX;
     var starty = mdevent.offsetY;
     var dragging = false;
-    var now = new Date().getTime();
-    if (holodeck.hasOwnProperty('doubleClickId') && (now < holodeck.doubleClickTime)) {
-      holodeckOnSelect(self.hasSelection(), self.selection(),
-        holodeck.selectMatchingUnits(self.getSelectOption(mdevent), [holodeck.doubleClickId])
-      );
-      delete holodeck.doubleClickTime;
+
+    var wasSelected = model.hasSelection();
+    var prevSelection = model.selection();
+
+    delete holodeck.doubleClickId;
+    self.mode('select');
+
+    input.capture(holodeck.div, function (event) {
+      if (!dragging && (event.type === 'mousemove')) {
+        dragging = true;
+        holodeck.beginDragSelect(startx, starty);
+      }
+      else if ((event.type === 'mouseup') && (event.button === mdevent.button)) {
+
+        input.release();
+        var option = self.getSelectOption(event);
+        if (dragging)
+          holodeckOnSelect(wasSelected, prevSelection,
+                           holodeck.endDragSelect(option, { left: startx, top: starty, right: event.offsetX, bottom: event.offsetY })
+                          );
+        else {
+          if (self.hasWorldHoverTarget())
+            holodeck.doubleClickId = self.worldHoverTarget();
+          var index = (holodeck.clickOffset || 0);
+          holodeckOnSelect(wasSelected, prevSelection,
+                           holodeck.selectAt(option, startx, starty, index)
+                          ).then(function (selection) {
+              if (selection && selection.selectionResult) {
+                holodeck.doubleClickId = selection.selectionResult[0];
+                ++holodeck.clickOffset;
+                if (!selection.selectionResult.length)
+                  api.camera.maybeSetFocusPlanet();
+
+              }
+            });
+        }
+        self.mode('default');
+        holodeck.showCommandConfirmation("", event.offsetX, event.offsetY);
+      }
+      else if ((event.type === 'keydown') && (event.keyCode === keyboard.esc)) {
+        input.release();
+        holodeck.endDragSelect('cancel');
+        self.mode('default');
+      }
+    });
+  }
+
+  self.selectDoubleClick = function(holodeck, mdevent) {
+    if (holodeck.hasOwnProperty('doubleClickId')) {
+      var promise = holodeck.selectMatchingUnits(
+        self.getSelectOption(mdevent),
+        [holodeck.doubleClickId])
+      holodeckOnSelect(self.hasSelection(), self.selection(), promise);
       delete holodeck.doubleClickId;
     }
+  }
+
+  self.selectDown = function(holodeck, mdevent) {
+    var now = new Date().getTime();
+    if (now < holodeck.doubleClickTime) {
+      self.selectDoubleClick(holodeck, mdevent)
+
+      delete holodeck.doubleClickTime;
+    }
     else {
-      self.mode('select');
-
-      var wasSelected = model.hasSelection();
-      var prevSelection = model.selection();
-
       holodeck.doubleClickTime = now + 250;
-      delete holodeck.doubleClickId;
-      input.capture(holodeck.div, function (event) {
-        if (!dragging && (event.type === 'mousemove')) {
-          dragging = true;
-          holodeck.beginDragSelect(startx, starty);
-          delete holodeck.doubleClickTime;
-        }
-        else if ((event.type === 'mouseup') && (event.button === mdevent.button)) {
 
-          input.release();
-          var option = self.getSelectOption(event);
-          if (dragging)
-            holodeckOnSelect(wasSelected, prevSelection,
-                             holodeck.endDragSelect(option, { left: startx, top: starty, right: event.offsetX, bottom: event.offsetY })
-                            );
-          else {
-            if (self.hasWorldHoverTarget())
-              holodeck.doubleClickId = self.worldHoverTarget();
-            var index = (holodeck.clickOffset || 0);
-            holodeckOnSelect(wasSelected, prevSelection,
-                             holodeck.selectAt(option, startx, starty, index)
-                            ).then(function (selection) {
-                if (selection && selection.selectionResult) {
-                  holodeck.doubleClickId = selection.selectionResult[0];
-                  ++holodeck.clickOffset;
-                  if (!selection.selectionResult.length)
-                    api.camera.maybeSetFocusPlanet();
-
-                }
-              });
-          }
-          self.mode('default');
-          holodeck.showCommandConfirmation("", event.offsetX, event.offsetY);
-        }
-        else if ((event.type === 'keydown') && (event.keyCode === keyboard.esc)) {
-          input.release();
-          holodeck.endDragSelect('cancel');
-          self.mode('default');
-        }
-      });
+      self.selectSingleClick(holodeck, mdevent)
     }
   }
 
