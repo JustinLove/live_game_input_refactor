@@ -79,18 +79,16 @@
     });
   }
 
-  var holodeckOnSelect = function (prevSelection, promise) {
-    return promise.then(function (selection) {
-      if (selection) {
-        var jSelection = JSON.parse(selection);
-        self.parseSelection(jSelection);
-        self.playSelectionSound(!!prevSelection, prevSelection, !!self.selection(), self.selection());
-        return jSelection;
-      }
-      else
-        return null;
-    });
-  };
+  var registerSelectionChangeFrom = function(prevSelection) {
+    return function (selection) {
+      if (!selection) return null
+
+      var jSelection = JSON.parse(selection);
+      self.parseSelection(jSelection);
+      self.playSelectionSound(!!prevSelection, prevSelection, !!self.selection(), self.selection());
+      return jSelection;
+    }
+  }
 
   self.celestialTargetDown = function(holodeck, mdevent) {
     if (model.celestialControlModel.findingTargetPlanet()) {
@@ -125,16 +123,19 @@
         input.release();
         var option = self.getSelectOption(event);
         if (dragging)
-          holodeckOnSelect(prevSelection,
-                           holodeck.endDragSelect(option, { left: startx, top: starty, right: event.offsetX, bottom: event.offsetY })
-                          );
+          holodeck.endDragSelect(option, {
+            left: startx,
+            top: starty,
+            right: event.offsetX,
+            bottom: event.offsetY
+          }).then(registerSelectionChangeFrom(prevSelection))
         else {
           if (self.hasWorldHoverTarget())
             holodeck.doubleClickId = self.worldHoverTarget();
           var index = (holodeck.clickOffset || 0);
-          holodeckOnSelect(prevSelection,
-                           holodeck.selectAt(option, startx, starty, index)
-                          ).then(function (selection) {
+          holodeck.selectAt(option, startx, starty, index)
+            .then(registerSelectionChangeFrom(prevSelection))
+            .then(function (selection) {
               if (selection && selection.selectionResult) {
                 holodeck.doubleClickId = selection.selectionResult[0];
                 ++holodeck.clickOffset;
@@ -157,10 +158,10 @@
 
   self.selectDoubleClick = function(holodeck, mdevent) {
     if (holodeck.hasOwnProperty('doubleClickId')) {
-      var promise = holodeck.selectMatchingUnits(
-        self.getSelectOption(mdevent),
-        [holodeck.doubleClickId])
-      holodeckOnSelect(self.selection(), promise);
+      holodeck.selectMatchingUnits(
+          self.getSelectOption(mdevent),
+          [holodeck.doubleClickId])
+        .then(registerSelectionChangeFrom(self.selection()))
       delete holodeck.doubleClickId;
     }
   }
