@@ -79,12 +79,12 @@
     });
   }
 
-  var holodeckOnSelect = function (wasSelected, prevSelection, promise) {
+  var holodeckOnSelect = function (prevSelection, promise) {
     return promise.then(function (selection) {
       if (selection) {
         var jSelection = JSON.parse(selection);
         self.parseSelection(jSelection);
-        self.playSelectionSound(wasSelected, prevSelection, self.hasSelection(), self.selection());
+        self.playSelectionSound(!!prevSelection, prevSelection, !!self.selection(), self.selection());
         return jSelection;
       }
       else
@@ -110,7 +110,6 @@
     var starty = mdevent.offsetY;
     var dragging = false;
 
-    var wasSelected = model.hasSelection();
     var prevSelection = model.selection();
 
     delete holodeck.doubleClickId;
@@ -126,14 +125,14 @@
         input.release();
         var option = self.getSelectOption(event);
         if (dragging)
-          holodeckOnSelect(wasSelected, prevSelection,
+          holodeckOnSelect(prevSelection,
                            holodeck.endDragSelect(option, { left: startx, top: starty, right: event.offsetX, bottom: event.offsetY })
                           );
         else {
           if (self.hasWorldHoverTarget())
             holodeck.doubleClickId = self.worldHoverTarget();
           var index = (holodeck.clickOffset || 0);
-          holodeckOnSelect(wasSelected, prevSelection,
+          holodeckOnSelect(prevSelection,
                            holodeck.selectAt(option, startx, starty, index)
                           ).then(function (selection) {
               if (selection && selection.selectionResult) {
@@ -161,7 +160,7 @@
       var promise = holodeck.selectMatchingUnits(
         self.getSelectOption(mdevent),
         [holodeck.doubleClickId])
-      holodeckOnSelect(self.hasSelection(), self.selection(), promise);
+      holodeckOnSelect(self.selection(), promise);
       delete holodeck.doubleClickId;
     }
   }
