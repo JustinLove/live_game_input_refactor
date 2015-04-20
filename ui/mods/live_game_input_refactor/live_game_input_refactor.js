@@ -258,25 +258,14 @@
             return;
           });
         } else {
-          holodeck.unitEndCommand(dragCommand, event.offsetX, event.offsetY, queue).then(function (success) {
-            holodeck.showCommandConfirmation(success ? dragCommand : "", event.offsetX, event.offsetY);
-            if (!success)
-              return;
-            var action = dragCommand.charAt(0).toUpperCase() + dragCommand.slice(1);
-            api.audio.playSound("/SE/UI/UI_Command_" + action);
-          });
+          holodeck.unitEndCommand(dragCommand,
+              event.offsetX, event.offsetY, queue)
+            .then(self.playCommandSound(holodeck, event, dragCommand))
         }
       },
       click: function(event) {
-        holodeck.unitGo(startx, starty, queue).then(function (action) {
-          holodeck.showCommandConfirmation(action, event.offsetX, event.offsetY);
-          if (!action || (action === 'move')) {
-            // Note: move currently plays its own sound.
-            return;
-          }
-          var action = action.charAt(0).toUpperCase() + action.slice(1);
-          api.audio.playSound("/SE/UI/UI_Command_" + action);
-        });
+        holodeck.unitGo(startx, starty, queue)
+          .then(self.playCommandSound(holodeck, event, null))
         self.mode('default');
       },
       cancel: function(event) {
@@ -286,6 +275,20 @@
     })
 
     return true;
+  }
+
+  self.playCommandSound = function(holodeck, event, command) {
+    return function (success) {
+      command = command || success
+      holodeck.showCommandConfirmation(success ? command : "",
+                                       event.offsetX, event.offsetY);
+      if (!success || (command === 'move')) {
+        // Note: move currently plays its own sound.
+        return;
+      }
+      var action = command.charAt(0).toUpperCase() + command.slice(1);
+      api.audio.playSound("/SE/UI/UI_Command_" + action);
+    };
   }
 
   self.commandModeDown = function(holodeck, mdevent, command, targetable) {
@@ -299,20 +302,9 @@
     var dragTime = now + 125;
     var queue = self.checkQueueAndWatchForEnd(mdevent, model.cmdQueueCount, self.endCommandMode)
 
-    var playSound = function(event) {
-      return function (success) {
-        holodeck.showCommandConfirmation(success ? command : "", event.offsetX, event.offsetY);
-        if (!success || (command === 'move')) {
-          // Note: move currently plays its own sound.
-          return;
-        }
-        var action = command.charAt(0).toUpperCase() + command.slice(1);
-        api.audio.playSound("/SE/UI/UI_Command_" + action);
-      };
-    }
-
     if (!model.allowCustomFormations() && (command === 'move' || command === 'unload')) {
-      holodeck.unitCommand(command, mdevent.offsetX, mdevent.offsetY, queue).then(playSound(mdevent));
+      holodeck.unitCommand(command, mdevent.offsetX, mdevent.offsetY, queue)
+        .then(self.playCommandSound(holodeck, mdevent, command));
       if (!queue)
         self.endCommandMode();
 
@@ -332,7 +324,9 @@
             input.capture(holodeck.div, function (event) {
               if ((event.type === 'mousedown') && (event.button === mdevent.button)) {
                 input.release();
-                holodeck.unitEndCommand(command, event.offsetX, event.offsetY, queue).then(playSound(event));
+                holodeck.unitEndCommand(command,
+                    event.offsetX, event.offsetY, queue)
+                  .then(self.playCommandSound(holodeck, event, command));
                 if (!queue)
                   self.endCommandMode();
               }
@@ -345,23 +339,21 @@
           });
         }
         else {
-          holodeck.unitEndCommand(command, event.offsetX, event.offsetY, queue).then(function (success) {
-            holodeck.showCommandConfirmation(success ? command : "", event.offsetX, event.offsetY);
-            if (!success)
-              return;
-            var action = command.charAt(0).toUpperCase() + command.slice(1);
-            api.audio.playSound("/SE/UI/UI_Command_" + action);
-          });
+          holodeck.unitEndCommand(command,
+              event.offsetX, event.offsetY, queue)
+            .then(self.playCommandSound(holodeck, event, command))
           if (!queue)
             self.endCommandMode();
         }
       },
       click: function(event) {
         if (self.hasWorldHoverTarget() && targetable) {
-          api.unit.targetCommand(command, self.worldHoverTarget(), queue).then(playSound(event));
+          api.unit.targetCommand(command, self.worldHoverTarget(), queue)
+            .then(self.playCommandSound(holodeck, event, command));
         }
         else {
-          holodeck.unitCommand(command, mdevent.offsetX, mdevent.offsetY, queue).then(playSound(event));
+          holodeck.unitCommand(command, mdevent.offsetX, mdevent.offsetY, queue)
+            .then(self.playCommandSound(holodeck, event, command));
         }
 
         if (!queue)
