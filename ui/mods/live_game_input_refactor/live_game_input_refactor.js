@@ -90,6 +90,31 @@
     }
   }
 
+  self.draggableCommand = function(holodeck, mdevent, delay, responders) {
+    var dragTime = new Date().getTime() + 0;
+    var dragging = false
+    input.capture(holodeck.div, function (event) {
+      if ((event.type === 'mousemove') && ((new Date().getTime()) >= dragTime)) {
+        if (!dragging) {
+          dragging = true;
+          responders.start(event)
+        }
+      }
+      else if ((event.type === 'mouseup') && (event.button === mdevent.button)) {
+        input.release();
+        if (dragging) {
+          responders.end(event)
+        } else {
+          responders.click(event)
+        }
+      }
+      else if ((event.type === 'keydown') && (event.keyCode === keyboard.esc)) {
+        input.release();
+        responders.cancel(event)
+      }
+    });
+  }
+
   self.celestialTargetDown = function(holodeck, mdevent) {
     if (model.celestialControlModel.findingTargetPlanet()) {
       model.celestialControlModel.mousedown(mdevent);
@@ -106,54 +131,52 @@
   self.selectSingleClick = function(holodeck, mdevent) {
     var startx = mdevent.offsetX;
     var starty = mdevent.offsetY;
-    var dragging = false;
 
     var prevSelection = model.selection();
 
     delete holodeck.doubleClickId;
     self.mode('select');
 
-    input.capture(holodeck.div, function (event) {
-      if (!dragging && (event.type === 'mousemove')) {
-        dragging = true;
+    self.draggableCommand(holodeck, mdevent, 0, {
+      start: function(event) {
         holodeck.beginDragSelect(startx, starty);
-      }
-      else if ((event.type === 'mouseup') && (event.button === mdevent.button)) {
-
-        input.release();
+      },
+      end: function(event) {
         var option = self.getSelectOption(event);
-        if (dragging)
-          holodeck.endDragSelect(option, {
-            left: startx,
-            top: starty,
-            right: event.offsetX,
-            bottom: event.offsetY
-          }).then(registerSelectionChangeFrom(prevSelection))
-        else {
-          if (self.hasWorldHoverTarget())
-            holodeck.doubleClickId = self.worldHoverTarget();
-          var index = (holodeck.clickOffset || 0);
-          holodeck.selectAt(option, startx, starty, index)
-            .then(registerSelectionChangeFrom(prevSelection))
-            .then(function (selection) {
-              if (selection && selection.selectionResult) {
-                holodeck.doubleClickId = selection.selectionResult[0];
-                ++holodeck.clickOffset;
-                if (!selection.selectionResult.length)
-                  api.camera.maybeSetFocusPlanet();
+        holodeck.endDragSelect(option, {
+          left: startx,
+          top: starty,
+          right: event.offsetX,
+          bottom: event.offsetY
+        }).then(registerSelectionChangeFrom(prevSelection))
 
-              }
-            });
-        }
+        self.mode('default');
+      },
+      click: function(event) {
+        if (self.hasWorldHoverTarget())
+          holodeck.doubleClickId = self.worldHoverTarget();
+        var index = (holodeck.clickOffset || 0);
+        var option = self.getSelectOption(event);
+        holodeck.selectAt(option, startx, starty, index)
+          .then(registerSelectionChangeFrom(prevSelection))
+          .then(function (selection) {
+            if (selection && selection.selectionResult) {
+              holodeck.doubleClickId = selection.selectionResult[0];
+              ++holodeck.clickOffset;
+              if (!selection.selectionResult.length)
+                api.camera.maybeSetFocusPlanet();
+
+            }
+          });
+
         self.mode('default');
         holodeck.showCommandConfirmation("", event.offsetX, event.offsetY);
-      }
-      else if ((event.type === 'keydown') && (event.keyCode === keyboard.esc)) {
-        input.release();
+      },
+      cancel: function() {
         holodeck.endDragSelect('cancel');
         self.mode('default');
       }
-    });
+    })
   }
 
   self.selectDoubleClick = function(holodeck, mdevent) {
