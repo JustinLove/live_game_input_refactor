@@ -295,11 +295,6 @@
     engine.call('camera.cameraMaybeSetFocusPlanet');
     var startx = mdevent.offsetX;
     var starty = mdevent.offsetY;
-    var dragging = false;
-    // TODO: Consider changing this once we have event timestamps.
-    // WLott is concerned that framerate dips will cause this to be wonky.
-    var now = new Date().getTime();
-    var dragTime = now + 125;
     var queue = self.checkQueueAndWatchForEnd(mdevent, model.cmdQueueCount, self.endCommandMode)
 
     if (!model.allowCustomFormations() && (command === 'move' || command === 'unload')) {
