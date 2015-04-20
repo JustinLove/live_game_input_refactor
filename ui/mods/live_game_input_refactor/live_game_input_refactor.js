@@ -94,6 +94,7 @@
     var dragTime = new Date().getTime() + 0;
     var dragging = false
     input.capture(mdevent.holodeck.div, function (event) {
+      event.holodeck = mdevent.holodeck
       //if (self.showTimeControls())
         //self.endCommandMode();
 
@@ -223,10 +224,11 @@
         return;
 
       input.capture(mdevent.holodeck.div, function (event) {
+        event.holodeck = mdevent.holodeck
         if ((event.type === 'mousedown') && (event.button === mdevent.button)) {
           input.release();
           mdevent.holodeck.unitEndCommand(command, event.offsetX, event.offsetY, queue)
-            .then(self.playCommandSound(mdevent.holodeck, event, command))
+            .then(self.playCommandSound(event, command))
           onExit()
         }
         else if ((event.type === 'keydown') && (event.keyCode === keyboard.esc)) {
@@ -264,12 +266,12 @@
         } else {
           holodeck.unitEndCommand(dragCommand,
               event.offsetX, event.offsetY, queue)
-            .then(self.playCommandSound(holodeck, event, dragCommand))
+            .then(self.playCommandSound(event, dragCommand))
         }
       },
       click: function(event) {
         holodeck.unitGo(startx, starty, queue)
-          .then(self.playCommandSound(holodeck, event, null))
+          .then(self.playCommandSound(event, null))
         self.mode('default');
       },
       cancel: function(event) {
@@ -281,10 +283,10 @@
     return true;
   }
 
-  self.playCommandSound = function(holodeck, event, command) {
+  self.playCommandSound = function(event, command) {
     return function (success) {
       command = command || success
-      holodeck.showCommandConfirmation(success ? command : "",
+      event.holodeck.showCommandConfirmation(success ? command : "",
                                        event.offsetX, event.offsetY);
       if (!success || (command === 'move')) {
         // Note: move currently plays its own sound.
@@ -304,7 +306,7 @@
 
     if (!model.allowCustomFormations() && (command === 'move' || command === 'unload')) {
       holodeck.unitCommand(command, mdevent.offsetX, mdevent.offsetY, queue)
-        .then(self.playCommandSound(holodeck, mdevent, command));
+        .then(self.playCommandSound(mdevent, command));
       if (!queue)
         self.endCommandMode();
 
@@ -326,7 +328,7 @@
         else {
           holodeck.unitEndCommand(command,
               event.offsetX, event.offsetY, queue)
-            .then(self.playCommandSound(holodeck, event, command))
+            .then(self.playCommandSound(event, command))
           if (!queue)
             self.endCommandMode();
         }
@@ -334,11 +336,11 @@
       click: function(event) {
         if (self.hasWorldHoverTarget() && targetable) {
           api.unit.targetCommand(command, self.worldHoverTarget(), queue)
-            .then(self.playCommandSound(holodeck, event, command));
+            .then(self.playCommandSound(event, command));
         }
         else {
           holodeck.unitCommand(command, mdevent.offsetX, mdevent.offsetY, queue)
-            .then(self.playCommandSound(holodeck, event, command));
+            .then(self.playCommandSound(event, command));
         }
 
         if (!queue)
