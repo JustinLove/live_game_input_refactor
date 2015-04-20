@@ -100,7 +100,7 @@
       if ((event.type === 'mousemove') && ((new Date().getTime()) >= dragTime)) {
         if (!dragging) {
           dragging = true;
-          responders.start(event)
+          responders.start(event, function(drag) {dragging = drag})
         }
       }
       else if ((event.type === 'mouseup') && (event.button === mdevent.button)) {
@@ -299,8 +299,8 @@
     var dragTime = now + 125;
     var queue = self.checkQueueAndWatchForEnd(mdevent, model.cmdQueueCount, self.endCommandMode)
 
-    input.capture(holodeck.div, function (event) {
-      var playSound = function (success) {
+    var playSound = function(event) {
+      return function (success) {
         holodeck.showCommandConfirmation(success ? command : "", event.offsetX, event.offsetY);
         if (!success || (command === 'move')) {
           // Note: move currently plays its own sound.
@@ -309,21 +309,22 @@
         var action = command.charAt(0).toUpperCase() + command.slice(1);
         api.audio.playSound("/SE/UI/UI_Command_" + action);
       };
+    }
 
-      var eventTime = new Date().getTime();
+    if (!model.allowCustomFormations() && (command === 'move' || command === 'unload')) {
+      holodeck.unitCommand(command, mdevent.offsetX, mdevent.offsetY, queue).then(playSound(mdevent));
+      if (!queue)
+        self.endCommandMode();
 
-      if (!model.allowCustomFormations() && (command === 'move' || command === 'unload')) {
-        input.release();
-        holodeck.unitCommand(command, mdevent.offsetX, mdevent.offsetY, queue).then(playSound);
-        if (!queue)
-          self.endCommandMode();
-      }
-      else if (!dragging && event.type === 'mousemove' && eventTime >= dragTime) {
-        holodeck.unitBeginCommand(command, startx, starty).then(function (ok) { dragging = ok; });
-      }
-      else if ((event.type === 'mouseup') && (event.button === mdevent.button)) {
-        input.release();
-        if (dragging && (command === 'move' || command === 'unload')) {
+      return
+    }
+
+    self.draggableCommand(holodeck, mdevent, 125, {
+      start: function(event, setDragging) {
+        holodeck.unitBeginCommand(command, startx, starty).then(setDragging);
+      },
+      end: function(event) {
+        if ((command === 'move' || command === 'unload')) {
           holodeck.unitChangeCommandState(command, event.offsetX, event.offsetY, queue).then(function (success) {
             if (!success)
               return;
@@ -331,7 +332,7 @@
             input.capture(holodeck.div, function (event) {
               if ((event.type === 'mousedown') && (event.button === mdevent.button)) {
                 input.release();
-                holodeck.unitEndCommand(command, event.offsetX, event.offsetY, queue).then(playSound);
+                holodeck.unitEndCommand(command, event.offsetX, event.offsetY, queue).then(playSound(event));
                 if (!queue)
                   self.endCommandMode();
               }
@@ -343,7 +344,7 @@
             });
           });
         }
-        else if (dragging) {
+        else {
           holodeck.unitEndCommand(command, event.offsetX, event.offsetY, queue).then(function (success) {
             holodeck.showCommandConfirmation(success ? command : "", event.offsetX, event.offsetY);
             if (!success)
@@ -354,24 +355,23 @@
           if (!queue)
             self.endCommandMode();
         }
-        else {
-          if (self.hasWorldHoverTarget() && targetable) {
-            api.unit.targetCommand(command, self.worldHoverTarget(), queue).then(playSound);
-          }
-          else {
-            holodeck.unitCommand(command, mdevent.offsetX, mdevent.offsetY, queue).then(playSound);
-          }
-
-          if (!queue)
-            self.endCommandMode();
+      },
+      click: function(event) {
+        if (self.hasWorldHoverTarget() && targetable) {
+          api.unit.targetCommand(command, self.worldHoverTarget(), queue).then(playSound(event));
         }
-      }
-      else if ((event.type === 'keydown') && (event.keyCode === keyboard.esc)) {
-        input.release();
+        else {
+          holodeck.unitCommand(command, mdevent.offsetX, mdevent.offsetY, queue).then(playSound(event));
+        }
+
+        if (!queue)
+          self.endCommandMode();
+      },
+      cancel: function(event) {
         holodeck.unitCancelCommand();
         self.mode('command_' + command);
-      }
-    });
+      },
+    })
   }
 
   self.holdMousePan = function(holodeck, mdevent) {
