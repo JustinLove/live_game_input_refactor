@@ -214,6 +214,29 @@
     }
   }
 
+  self.captureFormationFacing = function(holodeck, mdevent, event, command, queue, onExit) {
+    holodeck.unitChangeCommandState(command,
+        event.offsetX, event.offsetY, queue)
+      .then(function (success) {
+      if (!success)
+        return;
+
+      input.capture(holodeck.div, function (event) {
+        if ((event.type === 'mousedown') && (event.button === mdevent.button)) {
+          input.release();
+          holodeck.unitEndCommand(command, event.offsetX, event.offsetY, queue)
+            .then(self.playCommandSound(holodeck, event, command))
+          onExit()
+        }
+        else if ((event.type === 'keydown') && (event.keyCode === keyboard.esc)) {
+          input.release();
+          holodeck.unitCancelCommand();
+          onExit()
+        }
+      });
+    });
+  }
+
   self.contextualActionDown = function(holodeck, mdevent) {
     if (self.showTimeControls()) return false
     if (self.celestialControlActive()) return false
@@ -234,29 +257,8 @@
       },
       end: function(event) {
         if (dragCommand === 'move') {
-          holodeck.unitChangeCommandState(dragCommand,
-                                          event.offsetX,
-                                          event.offsetY,
-                                          queue).then(function (success) {
-            if (!success)
-              return;
-
-            input.capture(holodeck.div, function (event) {
-              if ((event.type === 'mousedown') && (event.button === mdevent.button)) {
-                input.release();
-                holodeck.unitEndCommand(dragCommand, event.offsetX, event.offsetY, queue).then(function (success) {
-                  holodeck.showCommandConfirmation(success ? dragCommand : "", event.offsetX, event.offsetY);
-                });
-                self.mode('default');
-              }
-              else if ((event.type === 'keydown') && (event.keyCode === keyboard.esc)) {
-                input.release();
-                holodeck.unitCancelCommand();
-                self.mode('default');
-              }
-            });
-            return;
-          });
+          self.captureFormationFacing(holodeck, mdevent, event, 'move', queue,
+                                      function() {self.mode('default')})
         } else {
           holodeck.unitEndCommand(dragCommand,
               event.offsetX, event.offsetY, queue)
@@ -312,26 +314,11 @@
       },
       end: function(event) {
         if ((command === 'move' || command === 'unload')) {
-          holodeck.unitChangeCommandState(command, event.offsetX, event.offsetY, queue).then(function (success) {
-            if (!success)
-              return;
-            // move and unload have extra input for their area command so recapture for it
-            input.capture(holodeck.div, function (event) {
-              if ((event.type === 'mousedown') && (event.button === mdevent.button)) {
-                input.release();
-                holodeck.unitEndCommand(command,
-                    event.offsetX, event.offsetY, queue)
-                  .then(self.playCommandSound(holodeck, event, command));
+          self.captureFormationFacing(holodeck, mdevent, event, command, queue,
+              function() {
                 if (!queue)
                   self.endCommandMode();
-              }
-              else if ((event.type === 'keydown') && (event.keyCode === keyboard.esc)) {
-                input.release();
-                holodeck.unitCancelCommand();
-                self.mode('command_' + command);
-              }
-            });
-          });
+              })
         }
         else {
           holodeck.unitEndCommand(command,
