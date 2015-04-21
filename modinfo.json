@@ -8,7 +8,7 @@
   "display_name": "Live Game Input Refactor",
   "forum": null,
   "identifier": "com.wondible.pa.live_game_input_refactor",
-  "priority": 100,
+  "priority": 90,
   "scenes": {
     "live_game": [
       "coui://ui/mods/live_game_input_refactor/live_game_input_refactor.js"
