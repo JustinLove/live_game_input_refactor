@@ -1,42 +1,98 @@
 (function() {
   var self = model
 
-  self.getSelectOption = function(event) {
-    if (event.shiftKey)
-    {
-      if (event.ctrlKey)
-        return 'remove';
-      else
-        return 'add';
-    }
-    else if (event.ctrlKey)
-      return 'toggle';
-    else
-      return '';
-  };
+  self.registerSelectionChangeFrom = function(prevSelection) {
+    return function (selection) {
+      if (!selection) return null
 
-  self.endQueueWatchEvent = 'keyup'
-  self.shouldQueueCommand = function(event) {
-    return event.shiftKey
+      var jSelection = JSON.parse(selection);
+      self.parseSelection(jSelection);
+      self.playSelectionSound(!!prevSelection, prevSelection, !!self.selection(), self.selection());
+      return jSelection;
+    }
   }
 
-  self.checkQueueAndWatchForEnd = function(mdevent, counter, onEnd) {
-    var queue = self.shouldQueueCommand(mdevent)
-    counter(counter() + 1);
-    if (queue && (counter() === 1)) {
-      var queueWatch = function (keyEvent) {
-        if (!self.shouldQueueCommand(keyEvent)) {
-          $('body').off(self.endQueueWatchEvent, queueWatch);
-          onEnd()
+  self.draggableCommand = function(mdevent, delay, responders) {
+    var dragTime = new Date().getTime() + 0;
+    var dragging = false
+    input.capture(mdevent.holodeck.div, function (event) {
+      event.holodeck = mdevent.holodeck
+      //if (self.showTimeControls())
+        //self.endCommandMode();
+
+      if ((event.type === 'mousemove') && ((new Date().getTime()) >= dragTime)) {
+        if (!dragging) {
+          dragging = true;
+          responders.start(event, function(drag) {dragging = drag})
         }
-      };
-      $('body').on(self.endQueueWatchEvent, queueWatch);
-    }
-    return queue
+      }
+      else if ((event.type === 'mouseup') && (event.button === mdevent.button)) {
+        input.release();
+        if (dragging) {
+          responders.end(event)
+        } else {
+          responders.click(event)
+        }
+      }
+      else if ((event.type === 'keydown') && (event.keyCode === keyboard.esc)) {
+        input.release();
+        responders.cancel(event)
+      }
+    });
   }
 
-  self.shouldSnap = function(event) {
-    return !event.ctrlKey
+  self.captureFormationFacing = function(mdevent, event, command, queue, onExit) {
+    mdevent.holodeck.unitChangeCommandState(command,
+        event.offsetX, event.offsetY, queue)
+      .then(function (success) {
+      if (!success)
+        return;
+
+      input.capture(mdevent.holodeck.div, function (event) {
+        event.holodeck = mdevent.holodeck
+        if ((event.type === 'mousedown') && (event.button === mdevent.button)) {
+          input.release();
+          mdevent.holodeck.unitEndCommand(command, event.offsetX, event.offsetY, queue)
+            .then(self.playCommandSound(event, command))
+          onExit()
+        }
+        else if ((event.type === 'keydown') && (event.keyCode === keyboard.esc)) {
+          input.release();
+          mdevent.holodeck.unitCancelCommand();
+          onExit()
+        }
+      });
+    });
+  }
+
+  self.playCommandSound = function(event, command) {
+    return function (success) {
+      command = command || success
+      event.holodeck.showCommandConfirmation(success ? command : "",
+                                       event.offsetX, event.offsetY);
+      if (!success || (command === 'move')) {
+        // Note: move currently plays its own sound.
+        return;
+      }
+      var action = command.charAt(0).toUpperCase() + command.slice(1);
+      api.audio.playSound("/SE/UI/UI_Command_" + action);
+    };
+  }
+
+  self.holdMousePan = function(mdevent) {
+    var oldMode = self.mode();
+    self.mode('camera');
+    mdevent.holodeck.beginControlCamera();
+    input.capture(mdevent.holodeck.div, function (event) {
+      var mouseDone = ((event.type === 'mouseup') && (event.button === mdevent.button));
+      var escKey = ((event.type === 'keydown') && (event.keyCode === keyboard.esc));
+      if (mouseDone || escKey) {
+        input.release();
+        mdevent.holodeck.endControlCamera();
+        if (self.mode() === 'camera')
+          self.mode(oldMode);
+      }
+    });
   }
 
   self.completeFabRotate = function(queue, event) {
@@ -76,46 +132,6 @@
         input.release();
         mdevent.holodeck.unitCancelFab();
         self.endFabMode();
-      }
-    });
-  }
-
-  self.registerSelectionChangeFrom = function(prevSelection) {
-    return function (selection) {
-      if (!selection) return null
-
-      var jSelection = JSON.parse(selection);
-      self.parseSelection(jSelection);
-      self.playSelectionSound(!!prevSelection, prevSelection, !!self.selection(), self.selection());
-      return jSelection;
-    }
-  }
-
-  self.draggableCommand = function(mdevent, delay, responders) {
-    var dragTime = new Date().getTime() + 0;
-    var dragging = false
-    input.capture(mdevent.holodeck.div, function (event) {
-      event.holodeck = mdevent.holodeck
-      //if (self.showTimeControls())
-        //self.endCommandMode();
-
-      if ((event.type === 'mousemove') && ((new Date().getTime()) >= dragTime)) {
-        if (!dragging) {
-          dragging = true;
-          responders.start(event, function(drag) {dragging = drag})
-        }
-      }
-      else if ((event.type === 'mouseup') && (event.button === mdevent.button)) {
-        input.release();
-        if (dragging) {
-          responders.end(event)
-        } else {
-          responders.click(event)
-        }
-      }
-      else if ((event.type === 'keydown') && (event.keyCode === keyboard.esc)) {
-        input.release();
-        responders.cancel(event)
       }
     });
   }
@@ -217,30 +233,6 @@
     }
   }
 
-  self.captureFormationFacing = function(mdevent, event, command, queue, onExit) {
-    mdevent.holodeck.unitChangeCommandState(command,
-        event.offsetX, event.offsetY, queue)
-      .then(function (success) {
-      if (!success)
-        return;
-
-      input.capture(mdevent.holodeck.div, function (event) {
-        event.holodeck = mdevent.holodeck
-        if ((event.type === 'mousedown') && (event.button === mdevent.button)) {
-          input.release();
-          mdevent.holodeck.unitEndCommand(command, event.offsetX, event.offsetY, queue)
-            .then(self.playCommandSound(event, command))
-          onExit()
-        }
-        else if ((event.type === 'keydown') && (event.keyCode === keyboard.esc)) {
-          input.release();
-          mdevent.holodeck.unitCancelCommand();
-          onExit()
-        }
-      });
-    });
-  }
-
   self.contextualActionDown = function(mdevent) {
     if (self.showTimeControls()) return false
     if (self.celestialControlActive()) return false
@@ -282,20 +274,6 @@
     })
 
     return true;
-  }
-
-  self.playCommandSound = function(event, command) {
-    return function (success) {
-      command = command || success
-      event.holodeck.showCommandConfirmation(success ? command : "",
-                                       event.offsetX, event.offsetY);
-      if (!success || (command === 'move')) {
-        // Note: move currently plays its own sound.
-        return;
-      }
-      var action = command.charAt(0).toUpperCase() + command.slice(1);
-      api.audio.playSound("/SE/UI/UI_Command_" + action);
-    };
   }
 
   self.commandModeDown = function(mdevent, command, targetable) {
@@ -354,25 +332,47 @@
     })
   }
 
-  self.holdMousePan = function(mdevent) {
-    var oldMode = self.mode();
-    self.mode('camera');
-    mdevent.holodeck.beginControlCamera();
-    input.capture(mdevent.holodeck.div, function (event) {
-      var mouseDone = ((event.type === 'mouseup') && (event.button === mdevent.button));
-      var escKey = ((event.type === 'keydown') && (event.keyCode === keyboard.esc));
-      if (mouseDone || escKey) {
-        input.release();
-        mdevent.holodeck.endControlCamera();
-        if (self.mode() === 'camera')
-          self.mode(oldMode);
-      }
-    });
-  }
-
   var LeftButton = 0
   var MiddleButton = 1
   var RightButton = 2
+
+  self.getSelectOption = function(event) {
+    if (event.shiftKey)
+    {
+      if (event.ctrlKey)
+        return 'remove';
+      else
+        return 'add';
+    }
+    else if (event.ctrlKey)
+      return 'toggle';
+    else
+      return '';
+  };
+
+  self.endQueueWatchEvent = 'keyup'
+  self.shouldQueueCommand = function(event) {
+    return event.shiftKey
+  }
+
+  self.checkQueueAndWatchForEnd = function(mdevent, counter, onEnd) {
+    var queue = self.shouldQueueCommand(mdevent)
+    counter(counter() + 1);
+    if (queue && (counter() === 1)) {
+      var queueWatch = function (keyEvent) {
+        if (!self.shouldQueueCommand(keyEvent)) {
+          $('body').off(self.endQueueWatchEvent, queueWatch);
+          onEnd()
+        }
+      };
+      $('body').on(self.endQueueWatchEvent, queueWatch);
+    }
+    return queue
+  }
+
+  self.shouldSnap = function(event) {
+    return !event.ctrlKey
+  }
 
   self.holodeckModeMouseDown = {};
 
@@ -411,7 +411,8 @@
   for (var i = 0; i < self.commands().length; ++i) {
     var command = self.commands()[i];
     var targetable = self.targetableCommands()[i];
-    self.holodeckModeMouseDown['command_' + command] = holodeckCommandMouseDown(command, targetable);
+    self.holodeckModeMouseDown['command_' + command] =
+      holodeckCommandMouseDown(command, targetable);
   }
 
   self.holodeckMouseDown = function (mdevent) {
