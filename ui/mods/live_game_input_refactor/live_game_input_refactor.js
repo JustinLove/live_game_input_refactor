@@ -449,6 +449,9 @@
     if (mdevent.target.nodeName !== 'HOLODECK')
       return;
 
+    //var t1 = new Date().getTime()
     self.holodeckMouseDown.apply(this, arguments)
+    //var t2 = new Date().getTime()
+    //console.log(t2 - t1)
   });
 })()
