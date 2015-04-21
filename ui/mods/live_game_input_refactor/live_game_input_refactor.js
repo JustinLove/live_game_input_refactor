@@ -80,7 +80,7 @@
     });
   }
 
-  var registerSelectionChangeFrom = function(prevSelection) {
+  self.registerSelectionChangeFrom = function(prevSelection) {
     return function (selection) {
       if (!selection) return null
 
@@ -154,7 +154,7 @@
           top: starty,
           right: event.offsetX,
           bottom: event.offsetY
-        }).then(registerSelectionChangeFrom(prevSelection))
+        }).then(self.registerSelectionChangeFrom(prevSelection))
 
         self.mode('default');
       },
@@ -164,7 +164,7 @@
         var index = (holodeck.clickOffset || 0);
         var option = self.getSelectOption(event);
         holodeck.selectAt(option, startx, starty, index)
-          .then(registerSelectionChangeFrom(prevSelection))
+          .then(self.registerSelectionChangeFrom(prevSelection))
           .then(function (selection) {
             if (selection && selection.selectionResult) {
               holodeck.doubleClickId = selection.selectionResult[0];
@@ -190,7 +190,7 @@
       mdevent.holodeck.selectMatchingUnits(
           self.getSelectOption(mdevent),
           [mdevent.holodeck.doubleClickId])
-        .then(registerSelectionChangeFrom(self.selection()))
+        .then(self.registerSelectionChangeFrom(self.selection()))
       delete mdevent.holodeck.doubleClickId;
     }
   }
