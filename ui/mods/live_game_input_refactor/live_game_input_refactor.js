@@ -1,24 +1,22 @@
 (function() {
-  var self = model
-
-  self.registerSelectionChangeFrom = function(prevSelection) {
+  model.registerSelectionChangeFrom = function(prevSelection) {
     return function (selection) {
       if (!selection) return null
 
       var jSelection = JSON.parse(selection);
-      self.parseSelection(jSelection);
-      self.playSelectionSound(!!prevSelection, prevSelection, !!self.selection(), self.selection());
+      model.parseSelection(jSelection);
+      model.playSelectionSound(!!prevSelection, prevSelection, !!model.selection(), model.selection());
       return jSelection;
     }
   }
 
-  self.draggableCommand = function(mdevent, delay, responders) {
+  model.draggableCommand = function(mdevent, delay, responders) {
     var dragTime = new Date().getTime() + 0;
     var dragging = false
     input.capture(mdevent.holodeck.div, function (event) {
       event.holodeck = mdevent.holodeck
-      //if (self.showTimeControls())
-        //self.endCommandMode();
+      //if (model.showTimeControls())
+        //model.endCommandMode();
 
       if ((event.type === 'mousemove') && ((new Date().getTime()) >= dragTime)) {
         if (!dragging) {
@@ -41,7 +39,7 @@
     });
   }
 
-  self.captureFormationFacing = function(mdevent, event, command, queue, onExit) {
+  model.captureFormationFacing = function(mdevent, event, command, queue, onExit) {
     mdevent.holodeck.unitChangeCommandState(command,
         event.offsetX, event.offsetY, queue)
       .then(function (success) {
@@ -53,7 +51,7 @@
         if ((event.type === 'mousedown') && (event.button === mdevent.button)) {
           input.release();
           mdevent.holodeck.unitEndCommand(command, event.offsetX, event.offsetY, queue)
-            .then(self.playCommandSound(event, command))
+            .then(model.playCommandSound(event, command))
           onExit()
         }
         else if ((event.type === 'keydown') && (event.keyCode === keyboard.esc)) {
@@ -65,7 +63,7 @@
     });
   }
 
-  self.playCommandSound = function(event, command) {
+  model.playCommandSound = function(event, command) {
     return function (success) {
       command = command || success
       event.holodeck.showCommandConfirmation(success ? command : "",
@@ -79,9 +77,9 @@
     };
   }
 
-  self.holdMousePan = function(mdevent) {
-    var oldMode = self.mode();
-    self.mode('camera');
+  model.holdMousePan = function(mdevent) {
+    var oldMode = model.mode();
+    model.mode('camera');
     mdevent.holodeck.beginControlCamera();
     input.capture(mdevent.holodeck.div, function (event) {
       var mouseDone = ((event.type === 'mouseup') && (event.button === mdevent.button));
@@ -89,54 +87,54 @@
       if (mouseDone || escKey) {
         input.release();
         mdevent.holodeck.endControlCamera();
-        if (self.mode() === 'camera')
-          self.mode(oldMode);
+        if (model.mode() === 'camera')
+          model.mode(oldMode);
       }
     });
   }
 
-  self.completeFabRotate = function(queue, event) {
-    var snap = self.shouldSnap(event)
+  model.completeFabRotate = function(queue, event) {
+    var snap = model.shouldSnap(event)
     event.holodeck.unitEndFab(event.offsetX, event.offsetY, queue, snap).then(function (success) {
       event.holodeck.showCommandConfirmation("", event.offsetX, event.offsetY);
       if (success)
         api.audio.playSound("/SE/UI/UI_Building_place");
     });
-    if (self.mode() === 'fab_end') queue = false;
-    self.mode('fab');
+    if (model.mode() === 'fab_end') queue = false;
+    model.mode('fab');
     if (!queue)
-      self.endFabMode();
+      model.endFabMode();
   }
 
-  self.beginFabDown = function(mdevent) {
-    var queue = self.checkQueueAndWatchForEnd(mdevent, model.fabCount, function() {
-      if (self.mode() === 'fab')
-        self.endFabMode();
-      else if (self.mode() === 'fab_rotate')
-        self.mode('fab_end');
+  model.beginFabDown = function(mdevent) {
+    var queue = model.checkQueueAndWatchForEnd(mdevent, model.fabCount, function() {
+      if (model.mode() === 'fab')
+        model.endFabMode();
+      else if (model.mode() === 'fab_rotate')
+        model.mode('fab_end');
     })
 
     mdevent.holodeck.unitBeginFab(
       mdevent.offsetX,
       mdevent.offsetY,
-      self.shouldSnap(mdevent))
+      model.shouldSnap(mdevent))
 
-    self.mode('fab_rotate');
+    model.mode('fab_rotate');
     input.capture(mdevent.holodeck.div, function (event) {
       event.holodeck = mdevent.holodeck
       if ((event.type === 'mouseup') && (event.button === mdevent.button)) {
         input.release();
-        self.completeFabRotate(queue, event)
+        model.completeFabRotate(queue, event)
       }
       else if ((event.type === 'keydown') && (event.keyCode === keyboard.esc)) {
         input.release();
         mdevent.holodeck.unitCancelFab();
-        self.endFabMode();
+        model.endFabMode();
       }
     });
   }
 
-  self.celestialTargetDown = function(mdevent) {
+  model.celestialTargetDown = function(mdevent) {
     if (model.celestialControlModel.findingTargetPlanet()) {
       model.celestialControlModel.mousedown(mdevent);
 
@@ -149,7 +147,7 @@
     }
   }
 
-  self.selectSingleClick = function(mdevent) {
+  model.selectSingleClick = function(mdevent) {
     var holodeck = mdevent.holodeck
     var startx = mdevent.offsetX;
     var starty = mdevent.offsetY;
@@ -157,30 +155,30 @@
     var prevSelection = model.selection();
 
     delete holodeck.doubleClickId;
-    self.mode('select');
+    model.mode('select');
 
-    self.draggableCommand(mdevent, 0, {
+    model.draggableCommand(mdevent, 0, {
       start: function(event) {
         holodeck.beginDragSelect(startx, starty);
       },
       end: function(event) {
-        var option = self.getSelectOption(event);
+        var option = model.getSelectOption(event);
         holodeck.endDragSelect(option, {
           left: startx,
           top: starty,
           right: event.offsetX,
           bottom: event.offsetY
-        }).then(self.registerSelectionChangeFrom(prevSelection))
+        }).then(model.registerSelectionChangeFrom(prevSelection))
 
-        self.mode('default');
+        model.mode('default');
       },
       click: function(event) {
-        if (self.hasWorldHoverTarget())
-          holodeck.doubleClickId = self.worldHoverTarget();
+        if (model.hasWorldHoverTarget())
+          holodeck.doubleClickId = model.worldHoverTarget();
         var index = (holodeck.clickOffset || 0);
-        var option = self.getSelectOption(event);
+        var option = model.getSelectOption(event);
         holodeck.selectAt(option, startx, starty, index)
-          .then(self.registerSelectionChangeFrom(prevSelection))
+          .then(model.registerSelectionChangeFrom(prevSelection))
           .then(function (selection) {
             if (selection && selection.selectionResult) {
               holodeck.doubleClickId = selection.selectionResult[0];
@@ -191,143 +189,143 @@
             }
           });
 
-        self.mode('default');
+        model.mode('default');
         holodeck.showCommandConfirmation("", event.offsetX, event.offsetY);
       },
       cancel: function() {
         holodeck.endDragSelect('cancel');
-        self.mode('default');
+        model.mode('default');
       }
     })
   }
 
-  self.selectDoubleClick = function(mdevent) {
+  model.selectDoubleClick = function(mdevent) {
     if (mdevent.holodeck.hasOwnProperty('doubleClickId')) {
       mdevent.holodeck.selectMatchingUnits(
-          self.getSelectOption(mdevent),
+          model.getSelectOption(mdevent),
           [mdevent.holodeck.doubleClickId])
-        .then(self.registerSelectionChangeFrom(self.selection()))
+        .then(model.registerSelectionChangeFrom(model.selection()))
       delete mdevent.holodeck.doubleClickId;
     }
   }
 
-  self.selectDown = function(mdevent) {
+  model.selectDown = function(mdevent) {
     var now = new Date().getTime();
     if (now < mdevent.holodeck.doubleClickTime) {
-      self.selectDoubleClick(mdevent)
+      model.selectDoubleClick(mdevent)
 
       delete mdevent.holodeck.doubleClickTime;
     }
     else {
       mdevent.holodeck.doubleClickTime = now + 250;
 
-      self.selectSingleClick(mdevent)
+      model.selectSingleClick(mdevent)
     }
   }
 
-  self.standardDown = function(mdevent) {
+  model.standardDown = function(mdevent) {
     if (model.celestialControlActive()) {
-      self.celestialTargetDown(mdevent)
+      model.celestialTargetDown(mdevent)
     } else {
-      self.selectDown(mdevent)
+      model.selectDown(mdevent)
     }
   }
 
-  self.contextualActionDown = function(mdevent) {
-    if (self.showTimeControls()) return false
-    if (self.celestialControlActive()) return false
+  model.contextualActionDown = function(mdevent) {
+    if (model.showTimeControls()) return false
+    if (model.celestialControlActive()) return false
 
     var holodeck = mdevent.holodeck
     var startx = mdevent.offsetX;
     var starty = mdevent.offsetY;
-    var queue = self.shouldQueueCommand(mdevent)
+    var queue = model.shouldQueueCommand(mdevent)
 
     var dragCommand = "";
 
-    self.draggableCommand(mdevent, 75, {
+    model.draggableCommand(mdevent, 75, {
       start: function(event) {
         holodeck.unitBeginGo(startx, starty, model.allowCustomFormations()).then( function(ok) {
           dragCommand = ok;
           if (dragCommand)
-            self.mode("command_" + dragCommand);
+            model.mode("command_" + dragCommand);
         } );
       },
       end: function(event) {
         if (dragCommand === 'move') {
-          self.captureFormationFacing(mdevent, event, 'move', queue,
-                                      function() {self.mode('default')})
+          model.captureFormationFacing(mdevent, event, 'move', queue,
+                                      function() {model.mode('default')})
         } else {
           holodeck.unitEndCommand(dragCommand,
               event.offsetX, event.offsetY, queue)
-            .then(self.playCommandSound(event, dragCommand))
+            .then(model.playCommandSound(event, dragCommand))
         }
       },
       click: function(event) {
         holodeck.unitGo(startx, starty, queue)
-          .then(self.playCommandSound(event, null))
-        self.mode('default');
+          .then(model.playCommandSound(event, null))
+        model.mode('default');
       },
       cancel: function(event) {
         holodeck.unitCancelCommand();
-        self.mode('default');
+        model.mode('default');
       },
     })
 
     return true;
   }
 
-  self.commandModeDown = function(mdevent, command, targetable) {
+  model.commandModeDown = function(mdevent, command, targetable) {
     engine.call('camera.cameraMaybeSetFocusPlanet');
     var holodeck = mdevent.holodeck
     var startx = mdevent.offsetX;
     var starty = mdevent.offsetY;
-    var queue = self.checkQueueAndWatchForEnd(mdevent, model.cmdQueueCount, self.endCommandMode)
+    var queue = model.checkQueueAndWatchForEnd(mdevent, model.cmdQueueCount, model.endCommandMode)
 
     if (!model.allowCustomFormations() && (command === 'move' || command === 'unload')) {
       holodeck.unitCommand(command, mdevent.offsetX, mdevent.offsetY, queue)
-        .then(self.playCommandSound(mdevent, command));
+        .then(model.playCommandSound(mdevent, command));
       if (!queue)
-        self.endCommandMode();
+        model.endCommandMode();
 
       return
     }
 
-    self.draggableCommand(mdevent, 125, {
+    model.draggableCommand(mdevent, 125, {
       start: function(event, setDragging) {
         holodeck.unitBeginCommand(command, startx, starty).then(setDragging);
       },
       end: function(event) {
         if ((command === 'move' || command === 'unload')) {
-          self.captureFormationFacing(mdevent, event, command, queue,
+          model.captureFormationFacing(mdevent, event, command, queue,
               function() {
                 if (!queue)
-                  self.endCommandMode();
+                  model.endCommandMode();
               })
         }
         else {
           holodeck.unitEndCommand(command,
               event.offsetX, event.offsetY, queue)
-            .then(self.playCommandSound(event, command))
+            .then(model.playCommandSound(event, command))
           if (!queue)
-            self.endCommandMode();
+            model.endCommandMode();
         }
       },
       click: function(event) {
-        if (self.hasWorldHoverTarget() && targetable) {
-          api.unit.targetCommand(command, self.worldHoverTarget(), queue)
-            .then(self.playCommandSound(event, command));
+        if (model.hasWorldHoverTarget() && targetable) {
+          api.unit.targetCommand(command, model.worldHoverTarget(), queue)
+            .then(model.playCommandSound(event, command));
         }
         else {
           holodeck.unitCommand(command, mdevent.offsetX, mdevent.offsetY, queue)
-            .then(self.playCommandSound(event, command));
+            .then(model.playCommandSound(event, command));
         }
 
         if (!queue)
-          self.endCommandMode();
+          model.endCommandMode();
       },
       cancel: function(event) {
         holodeck.unitCancelCommand();
-        self.mode('command_' + command);
+        model.mode('command_' + command);
       },
     })
   }
@@ -336,7 +334,7 @@
   var MiddleButton = 1
   var RightButton = 2
 
-  self.getSelectOption = function(event) {
+  model.getSelectOption = function(event) {
     if (event.shiftKey)
     {
       if (event.ctrlKey)
@@ -350,51 +348,51 @@
       return '';
   };
 
-  self.endQueueWatchEvent = 'keyup'
-  self.shouldQueueCommand = function(event) {
+  model.endQueueWatchEvent = 'keyup'
+  model.shouldQueueCommand = function(event) {
     return event.shiftKey
   }
 
-  self.checkQueueAndWatchForEnd = function(mdevent, counter, onEnd) {
-    var queue = self.shouldQueueCommand(mdevent)
+  model.checkQueueAndWatchForEnd = function(mdevent, counter, onEnd) {
+    var queue = model.shouldQueueCommand(mdevent)
     counter(counter() + 1);
     if (queue && (counter() === 1)) {
       var queueWatch = function (keyEvent) {
-        if (!self.shouldQueueCommand(keyEvent)) {
-          $('body').off(self.endQueueWatchEvent, queueWatch);
+        if (!model.shouldQueueCommand(keyEvent)) {
+          $('body').off(model.endQueueWatchEvent, queueWatch);
           onEnd()
         }
       };
-      $('body').on(self.endQueueWatchEvent, queueWatch);
+      $('body').on(model.endQueueWatchEvent, queueWatch);
     }
     return queue
   }
 
-  self.shouldSnap = function(event) {
+  model.shouldSnap = function(event) {
     return !event.ctrlKey
   }
 
-  self.holodeckModeMouseDown = {};
+  model.holodeckModeMouseDown = {};
 
-  self.holodeckModeMouseDown.fab = function (mdevent) {
+  model.holodeckModeMouseDown.fab = function (mdevent) {
     if (mdevent.button === LeftButton) {
-      self.beginFabDown(mdevent)
+      model.beginFabDown(mdevent)
       return true;
     }
     else if (mdevent.button === RightButton) {
-      self.endFabMode();
+      model.endFabMode();
       return true;
     }
     return false;
   };
 
-  self.holodeckModeMouseDown['default'] = function (mdevent) {
+  model.holodeckModeMouseDown['default'] = function (mdevent) {
     if (mdevent.button === LeftButton) {
-      self.standardDown(mdevent)
+      model.standardDown(mdevent)
       return true;
     }
     else if (mdevent.button === RightButton) {
-      return self.contextualActionDown(mdevent)
+      return model.contextualActionDown(mdevent)
     }
     return false;
   };
@@ -402,26 +400,26 @@
   var holodeckCommandMouseDown = function (command, targetable) {
     return function (mdevent) {
       if (mdevent.button === LeftButton) {
-        self.commandModeDown(mdevent, command, targetable)
+        model.commandModeDown(mdevent, command, targetable)
         return true;
       } else if (mdevent.button === RightButton) {
-        self.endCommandMode()
+        model.endCommandMode()
         return true;
       }
     };
   };
 
-  for (var i = 0; i < self.commands().length; ++i) {
-    var command = self.commands()[i];
-    var targetable = self.targetableCommands()[i];
-    self.holodeckModeMouseDown['command_' + command] =
+  for (var i = 0; i < model.commands().length; ++i) {
+    var command = model.commands()[i];
+    var targetable = model.targetableCommands()[i];
+    model.holodeckModeMouseDown['command_' + command] =
       holodeckCommandMouseDown(command, targetable);
   }
 
-  self.holodeckMouseDown = function (mdevent) {
+  model.holodeckMouseDown = function (mdevent) {
     mdevent.holodeck = api.Holodeck.get(this);
 
-    var handler = self.holodeckModeMouseDown[self.mode()];
+    var handler = model.holodeckModeMouseDown[model.mode()];
     if (handler && handler(mdevent)) {
       mdevent.preventDefault();
       mdevent.stopPropagation();
@@ -429,7 +427,7 @@
     }
 
     if (mdevent.button === MiddleButton) {
-      self.holdMousePan(mdevent)
+      model.holdMousePan(mdevent)
       mdevent.preventDefault();
       mdevent.stopPropagation();
       return;
@@ -437,8 +435,8 @@
 
     // Don't think this will happen
     // I think it's here to get out of minor modes without handlers
-    if (mdevent.button === RightButton && self.mode() !== 'default') {
-      self.endCommandMode()
+    if (mdevent.button === RightButton && model.mode() !== 'default') {
+      model.endCommandMode()
     }
   }
 
@@ -450,7 +448,7 @@
       return;
 
     //var t1 = new Date().getTime()
-    self.holodeckMouseDown.apply(this, arguments)
+    model.holodeckMouseDown.apply(this, arguments)
     //var t2 = new Date().getTime()
     //console.log(t2 - t1)
   });
