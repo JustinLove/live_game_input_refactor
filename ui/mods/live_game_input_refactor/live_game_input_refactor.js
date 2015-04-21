@@ -404,6 +404,9 @@
       if (mdevent.button === LeftButton) {
         self.commandModeDown(mdevent, command, targetable)
         return true;
+      } else if (mdevent.button === RightButton) {
+        self.endCommandMode()
+        return true;
       }
     };
   };
@@ -432,6 +435,8 @@
       return;
     }
 
+    // Don't think this will happen
+    // I think it's here to get out of minor modes without handlers
     if (mdevent.button === RightButton && self.mode() !== 'default') {
       self.endCommandMode()
     }
