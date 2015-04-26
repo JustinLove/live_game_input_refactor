@@ -330,10 +330,6 @@
     })
   }
 
-  var LeftButton = 0
-  var MiddleButton = 1
-  var RightButton = 2
-
   model.getSelectOption = function(event) {
     if (event.shiftKey)
     {
@@ -373,6 +369,10 @@
   }
 
   model.holodeckModeMouseDown = {};
+
+  var LeftButton = 0
+  var MiddleButton = 1
+  var RightButton = 2
 
   model.holodeckModeMouseDown.fab = function (mdevent) {
     if (mdevent.button === LeftButton) {
