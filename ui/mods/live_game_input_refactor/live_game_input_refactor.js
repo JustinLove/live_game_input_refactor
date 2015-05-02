@@ -107,7 +107,10 @@
   }
 
   model.beginFabDown = function(mdevent) {
-    var queue = model.checkQueueAndWatchForEnd(mdevent, model.fabCount, function() {
+    var queue = model.checkQueueAndWatchForEnd(mdevent,
+                                               model.shouldQueueFab,
+                                               model.fabCount,
+                                               function() {
       if (model.mode() === 'fab')
         model.endFabMode();
       else if (model.mode() === 'fab_rotate')
@@ -238,7 +241,7 @@
     var holodeck = mdevent.holodeck
     var startx = mdevent.offsetX;
     var starty = mdevent.offsetY;
-    var queue = model.shouldQueueCommand(mdevent)
+    var queue = model.shouldQueueContextual(mdevent)
 
     var dragCommand = "";
 
@@ -279,7 +282,10 @@
     var holodeck = mdevent.holodeck
     var startx = mdevent.offsetX;
     var starty = mdevent.offsetY;
-    var queue = model.checkQueueAndWatchForEnd(mdevent, model.cmdQueueCount, model.endCommandMode)
+    var queue = model.checkQueueAndWatchForEnd(mdevent,
+                                               model.shouldQueueCommand,
+                                               model.cmdQueueCount,
+                                               model.endCommandMode)
 
     if (!model.allowCustomFormations() && (command === 'move' || command === 'unload')) {
       holodeck.unitCommand(command, mdevent.offsetX, mdevent.offsetY, queue)
@@ -345,16 +351,25 @@
   };
 
   model.endQueueWatchEvent = 'keyup'
-  model.shouldQueueCommand = function(event) {
+  model.shouldQueueDefault = function(event) {
     return event.shiftKey
   }
+  model.shouldQueueFab = function(event) {
+    return model.shouldQueueDefault(event)
+  }
+  model.shouldQueueContextual = function(event) {
+    return model.shouldQueueDefault(event)
+  }
+  model.shouldQueueCommand = function(event) {
+    return model.shouldQueueDefault(event)
+  }
 
-  model.checkQueueAndWatchForEnd = function(mdevent, counter, onEnd) {
-    var queue = model.shouldQueueCommand(mdevent)
+  model.checkQueueAndWatchForEnd = function(mdevent, shouldQueue, counter, onEnd) {
+    var queue = shouldQueue(mdevent)
     counter(counter() + 1);
     if (queue && (counter() === 1)) {
       var queueWatch = function (keyEvent) {
-        if (!model.shouldQueueCommand(keyEvent)) {
+        if (!shouldQueue(keyEvent)) {
           $('body').off(model.endQueueWatchEvent, queueWatch);
           onEnd()
         }
