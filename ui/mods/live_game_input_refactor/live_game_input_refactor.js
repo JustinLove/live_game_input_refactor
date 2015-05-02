@@ -39,9 +39,9 @@
     });
   }
 
-  model.captureFormationFacing = function(mdevent, event, command, queue, onExit) {
+  model.captureFormationFacing = function(mdevent, event, command, append, onExit) {
     mdevent.holodeck.unitChangeCommandState(command,
-        event.offsetX, event.offsetY, queue)
+        event.offsetX, event.offsetY, append)
       .then(function (success) {
       if (!success)
         return;
@@ -50,7 +50,7 @@
         event.holodeck = mdevent.holodeck
         if ((event.type === 'mousedown') && (event.button === mdevent.button)) {
           input.release();
-          mdevent.holodeck.unitEndCommand(command, event.offsetX, event.offsetY, queue)
+          mdevent.holodeck.unitEndCommand(command, event.offsetX, event.offsetY, append)
             .then(model.playCommandSound(event, command))
           onExit()
         }
@@ -93,24 +93,26 @@
     });
   }
 
-  model.completeFabRotate = function(queue, event) {
+  model.completeFabRotate = function(mdevent, event) {
     var snap = model.shouldSnap(event)
-    event.holodeck.unitEndFab(event.offsetX, event.offsetY, queue, snap).then(function (success) {
+    event.holodeck.unitEndFab(event.offsetX, event.offsetY, model.shouldAppendFab(mdevent), snap).then(function (success) {
       event.holodeck.showCommandConfirmation("", event.offsetX, event.offsetY);
       if (success)
         api.audio.playSound("/SE/UI/UI_Building_place");
     });
-    if (model.mode() === 'fab_end') queue = false;
-    model.mode('fab');
-    if (!queue)
+    if (model.mode() === 'fab_end' || model.shouldExitModeFab(mdevent)) {
+      model.mode('fab');
       model.endFabMode();
+    } else {
+      model.mode('fab');
+    }
   }
 
   model.beginFabDown = function(mdevent) {
-    var queue = model.checkQueueAndWatchForEnd(mdevent,
-                                               model.shouldQueueFab,
-                                               model.fabCount,
-                                               function() {
+    model.watchForEnd(mdevent,
+                      model.shouldExitModeFab,
+                      model.fabCount,
+                      function() {
       if (model.mode() === 'fab')
         model.endFabMode();
       else if (model.mode() === 'fab_rotate')
@@ -127,7 +129,7 @@
       event.holodeck = mdevent.holodeck
       if ((event.type === 'mouseup') && (event.button === mdevent.button)) {
         input.release();
-        model.completeFabRotate(queue, event)
+        model.completeFabRotate(mdevent, event)
       }
       else if ((event.type === 'keydown') && (event.keyCode === keyboard.esc)) {
         input.release();
@@ -241,7 +243,7 @@
     var holodeck = mdevent.holodeck
     var startx = mdevent.offsetX;
     var starty = mdevent.offsetY;
-    var queue = model.shouldQueueContextual(mdevent)
+    var append = model.shouldAppendContext(mdevent)
 
     var dragCommand = "";
 
@@ -255,16 +257,16 @@
       },
       end: function(event) {
         if (dragCommand === 'move') {
-          model.captureFormationFacing(mdevent, event, 'move', queue,
+          model.captureFormationFacing(mdevent, event, 'move', append,
                                       function() {model.mode('default')})
         } else {
           holodeck.unitEndCommand(dragCommand,
-              event.offsetX, event.offsetY, queue)
+              event.offsetX, event.offsetY, append)
             .then(model.playCommandSound(event, dragCommand))
         }
       },
       click: function(event) {
-        holodeck.unitGo(startx, starty, queue)
+        holodeck.unitGo(startx, starty, append)
           .then(model.playCommandSound(event, null))
         model.mode('default');
       },
@@ -282,15 +284,17 @@
     var holodeck = mdevent.holodeck
     var startx = mdevent.offsetX;
     var starty = mdevent.offsetY;
-    var queue = model.checkQueueAndWatchForEnd(mdevent,
-                                               model.shouldQueueCommand,
-                                               model.cmdQueueCount,
-                                               model.endCommandMode)
+    model.watchForEnd(mdevent,
+                      model.shouldExitModeCommand,
+                      model.cmdQueueCount,
+                      model.endCommandMode)
+    var append = model.shouldAppendCommand(mdevent)
+    var exit = model.shouldExitModeCommand(mdevent)
 
     if (!model.allowCustomFormations() && (command === 'move' || command === 'unload')) {
-      holodeck.unitCommand(command, mdevent.offsetX, mdevent.offsetY, queue)
+      holodeck.unitCommand(command, mdevent.offsetX, mdevent.offsetY, append)
         .then(model.playCommandSound(mdevent, command));
-      if (!queue)
+      if (exit)
         model.endCommandMode();
 
       return
@@ -302,31 +306,31 @@
       },
       end: function(event) {
         if ((command === 'move' || command === 'unload')) {
-          model.captureFormationFacing(mdevent, event, command, queue,
+          model.captureFormationFacing(mdevent, event, command, append,
               function() {
-                if (!queue)
+                if (exit)
                   model.endCommandMode();
               })
         }
         else {
           holodeck.unitEndCommand(command,
-              event.offsetX, event.offsetY, queue)
+              event.offsetX, event.offsetY, append)
             .then(model.playCommandSound(event, command))
-          if (!queue)
+          if (exit)
             model.endCommandMode();
         }
       },
       click: function(event) {
         if (model.hasWorldHoverTarget() && targetable) {
-          api.unit.targetCommand(command, model.worldHoverTarget(), queue)
+          api.unit.targetCommand(command, model.worldHoverTarget(), append)
             .then(model.playCommandSound(event, command));
         }
         else {
-          holodeck.unitCommand(command, mdevent.offsetX, mdevent.offsetY, queue)
+          holodeck.unitCommand(command, mdevent.offsetX, mdevent.offsetY, append)
             .then(model.playCommandSound(event, command));
         }
 
-        if (!queue)
+        if (exit)
           model.endCommandMode();
       },
       cancel: function(event) {
@@ -350,33 +354,38 @@
       return '';
   };
 
-  model.endQueueWatchEvent = 'keyup'
-  model.shouldQueueDefault = function(event) {
+  model.endWatchEvent = 'keyup'
+
+  model.shouldAppendFab = function(event) {
     return event.shiftKey
   }
-  model.shouldQueueFab = function(event) {
-    return model.shouldQueueDefault(event)
-  }
-  model.shouldQueueContextual = function(event) {
-    return model.shouldQueueDefault(event)
-  }
-  model.shouldQueueCommand = function(event) {
-    return model.shouldQueueDefault(event)
+  model.shouldExitModeFab = function(event) {
+    return !event.shiftKey
   }
 
-  model.checkQueueAndWatchForEnd = function(mdevent, shouldQueue, counter, onEnd) {
-    var queue = shouldQueue(mdevent)
+  model.shouldAppendContext = function(event) {
+    return event.shiftKey
+  }
+  //no exit, context isn't a mode
+
+  model.shouldAppendCommand = function(event) {
+    return event.shiftKey
+  }
+  model.shouldExitModeCommand = function(event) {
+    return !event.shiftKey
+  }
+
+  model.watchForEnd = function(mdevent, shouldExit, counter, onEnd) {
     counter(counter() + 1);
-    if (queue && (counter() === 1)) {
-      var queueWatch = function (keyEvent) {
-        if (!shouldQueue(keyEvent)) {
-          $('body').off(model.endQueueWatchEvent, queueWatch);
+    if (shouldExit(mdevent) && (counter() === 1)) {
+      var endWatch = function (keyEvent) {
+        if (!shouldExit(keyEvent)) {
+          $('body').off(model.endWatchEvent, endWatch);
           onEnd()
         }
       };
-      $('body').on(model.endQueueWatchEvent, queueWatch);
+      $('body').on(model.endWatchEvent, endWatch);
     }
-    return queue
   }
 
   model.shouldSnap = function(event) {
