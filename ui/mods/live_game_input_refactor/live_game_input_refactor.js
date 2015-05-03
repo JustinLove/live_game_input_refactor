@@ -377,9 +377,9 @@
 
   model.watchForEnd = function(mdevent, shouldExit, counter, onEnd) {
     counter(counter() + 1);
-    if (shouldExit(mdevent) && (counter() === 1)) {
+    if (!shouldExit(mdevent) && (counter() === 1)) {
       var endWatch = function (keyEvent) {
-        if (!shouldExit(keyEvent)) {
+        if (shouldExit(keyEvent)) {
           $('body').off(model.endWatchEvent, endWatch);
           onEnd()
         }
