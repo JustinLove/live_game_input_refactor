@@ -100,11 +100,9 @@
       if (success)
         api.audio.playSound("/SE/UI/UI_Building_place");
     });
-    if (model.mode() === 'fab_end' || model.shouldExitModeFab(mdevent)) {
-      model.mode('fab');
+    model.mode('fab');
+    if (model.shouldExitModeFab(event)) {
       model.endFabMode();
-    } else {
-      model.mode('fab');
     }
   }
 
@@ -115,8 +113,6 @@
                       function() {
       if (model.mode() === 'fab')
         model.endFabMode();
-      else if (model.mode() === 'fab_rotate')
-        model.mode('fab_end');
     })
 
     mdevent.holodeck.unitBeginFab(
