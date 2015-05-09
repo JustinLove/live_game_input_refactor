@@ -1,8 +1,5 @@
 # Live Game Input Refactor
 
-Replaces big knarly functions with small moddable ones.
+Replaces big knarly mouse functions with small moddable ones.
 
-## Features
-
-- Rainbows
-- Unicorns
+I'm not entirely happy with the initial way functions fell apart, so it may undergo drastic changes.

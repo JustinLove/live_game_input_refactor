@@ -4,7 +4,7 @@
   "category": ["ui", "framework"],
   "context": "client",
   "date": "2015/04/14",
-  "description": "Replaces big knarly functions with small moddable ones.",
+  "description": "Replaces big knarly mouse functions with small moddable ones.",
   "display_name": "Live Game Input Refactor",
   "forum": null,
   "identifier": "com.wondible.pa.live_game_input_refactor",
