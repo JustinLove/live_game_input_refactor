@@ -11,7 +11,7 @@
   }
 
   model.draggableCommand = function(mdevent, delay, responders) {
-    var dragTime = new Date().getTime() + 0;
+    var dragTime = new Date().getTime() + delay;
     var dragging = false
     var dragStart = false
     input.capture(mdevent.holodeck.div, function (event) {
