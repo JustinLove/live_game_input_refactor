@@ -280,7 +280,7 @@
       },
       click: function(event) {
         holodeck.unitGo(startx, starty, append)
-          .then(model.playCommandSound(event, null))
+          .then(model.playCommandSound(mdevent, null))
         model.mode('default');
       },
       cancel: function(event) {
@@ -340,7 +340,7 @@
         }
         else {
           holodeck.unitCommand(command, mdevent.offsetX, mdevent.offsetY, append)
-            .then(model.playCommandSound(event, command));
+            .then(model.playCommandSound(mdevent, command));
         }
 
         if (exit)
