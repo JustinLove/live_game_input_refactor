@@ -13,17 +13,26 @@
   model.draggableCommand = function(mdevent, delay, responders) {
     var dragTime = new Date().getTime() + delay;
     var dragging = false
-    var dragStart = false
+    var polling = true
+
+    var setDragging = function(drag) {
+      dragging = drag
+      polling = !drag
+    }
+    var cancelDragging = function() {
+      dragging = false
+      polling = false
+    }
+
     input.capture(mdevent.holodeck.div, function (event) {
       event.holodeck = mdevent.holodeck
       //if (model.showTimeControls())
         //model.endCommandMode();
 
-      if ((event.type === 'mousemove') && ((new Date().getTime()) >= dragTime)) {
-        if (!dragStart) {
-          dragging = dragStart = true;
-          responders.start(event, function(drag) {dragging = drag})
-        }
+      if ((event.type === 'mousemove') && polling && ((new Date().getTime()) >= dragTime)) {
+        polling = false;
+        dragging = true;
+        responders.start(event, setDragging, cancelDragging)
       }
       else if ((event.type === 'mouseup') && (event.button === mdevent.button)) {
         input.release();
@@ -245,13 +254,14 @@
     var dragCommand = "";
 
     model.draggableCommand(mdevent, 75, {
-      start: function(event, setDragging) {
+      start: function(event, setDragging, cancelDragging) {
         holodeck.unitBeginGo(startx, starty, model.allowCustomFormations()).then( function(ok) {
           dragCommand = ok;
           if (dragCommand) {
             model.mode("command_" + dragCommand);
+            setDragging(true)
           } else {
-            setDragging(false)
+            cancelDragging()
           }
         } );
       },
