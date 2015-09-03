@@ -1,9 +1,9 @@
 {
   "author": "wondible",
-  "build": "80462",
+  "build": "86765",
   "category": ["ui", "framework"],
   "context": "client",
-  "date": "2015/05/17",
+  "date": "2015/09/03",
   "description": "Replaces big knarly mouse functions with small moddable ones.",
   "display_name": "Live Game Input Refactor",
   "forum": "https://forums.uberent.com/threads/wip-live-game-input-refactor.68745/",
@@ -15,6 +15,6 @@
     ]
   },
   "signature": "not yet implemented",
-  "version": "0.1.1"
+  "version": "0.1.2"
 }
 

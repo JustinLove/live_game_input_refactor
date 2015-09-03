@@ -1,4 +1,24 @@
 (function() {
+  model.uiScale = api.settings.getSynchronous('ui', 'ui_scale') || 1.0;
+
+  live_game_settings_exit = handlers['settings.exit']
+  handlers['settings.exit'] = function() {
+    live_game_settings_exit()
+    model.uiScale = api.settings.getSynchronous('ui', 'ui_scale') || 1.0;
+  };
+
+  model.scaleMouseEvent = model.scaleMouseEvent || function (mdevent) {
+    if (mdevent.uiScaled)
+      return;
+
+    mdevent.uiScaled = true;
+
+    mdevent.offsetX = Math.floor(mdevent.offsetX * model.uiScale);
+    mdevent.offsetY = Math.floor(mdevent.offsetY * model.uiScale);
+    mdevent.clientX = Math.floor(mdevent.clientX * model.uiScale);
+    mdevent.clientY = Math.floor(mdevent.clientY * model.uiScale);
+  };
+
   model.registerSelectionChangeFrom = function(prevSelection) {
     return function (selection) {
       if (!selection) return null
@@ -25,6 +45,8 @@
     }
 
     input.capture(mdevent.holodeck.div, function (event) {
+      model.scaleMouseEvent(event)
+
       event.holodeck = mdevent.holodeck
       //if (model.showTimeControls())
         //model.endCommandMode();
@@ -57,6 +79,8 @@
         return;
 
       input.capture(mdevent.holodeck.div, function (event) {
+        model.scaleMouseEvent(event)
+
         event.holodeck = mdevent.holodeck
         if ((event.type === 'mousedown') && (event.button === mdevent.button)) {
           input.release();
@@ -92,6 +116,8 @@
     model.mode('camera');
     mdevent.holodeck.beginControlCamera();
     input.capture(mdevent.holodeck.div, function (event) {
+      model.scaleMouseEvent(event)
+
       var mouseDone = ((event.type === 'mouseup') && (event.button === mdevent.button));
       var escKey = ((event.type === 'keydown') && (event.keyCode === keyboard.esc));
       if (mouseDone || escKey) {
@@ -132,6 +158,7 @@
 
     model.mode('fab_rotate');
     input.capture(mdevent.holodeck.div, function (event) {
+      model.scaleMouseEvent(event)
       event.holodeck = mdevent.holodeck
       if ((event.type === 'mouseup') && (event.button === mdevent.button)) {
         input.release();
@@ -150,6 +177,7 @@
       model.celestialControlModel.mousedown(mdevent);
 
       input.capture($('body'), function (event) {
+        model.scaleMouseEvent(event)
         if (event.type === 'mouseup' && event.button === mdevent.button) {
           model.celestialControlModel.mouseup(event);
           input.release();
@@ -454,6 +482,7 @@
   }
 
   model.holodeckMouseDown = function (mdevent) {
+    model.scaleMouseEvent(mdevent)
     mdevent.holodeck = api.Holodeck.get(this);
 
     var handler = model.holodeckModeMouseDown[model.mode()];
