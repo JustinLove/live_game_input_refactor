@@ -320,7 +320,7 @@
     return true;
   }
 
-  model.commandModeDown = function(mdevent, command, targetable) {
+  model.commandModeDown = function(mdevent, command) {
     api.camera.maybeSetFocusPlanet()
     var holodeck = mdevent.holodeck
     var startx = mdevent.offsetX;
@@ -362,14 +362,8 @@
         }
       },
       click: function(event) {
-        if (model.hasWorldHoverTarget() && targetable) {
-          api.unit.targetCommand(command, model.worldHoverTarget(), append)
-            .then(model.playCommandSound(event, command));
-        }
-        else {
-          holodeck.unitCommand(command, mdevent.offsetX, mdevent.offsetY, append)
-            .then(model.playCommandSound(mdevent, command));
-        }
+        holodeck.unitCommand(command, mdevent.offsetX, mdevent.offsetY, append)
+          .then(model.playCommandSound(mdevent, command));
 
         if (exit)
           model.endCommandMode();
@@ -462,10 +456,10 @@
     return false;
   };
 
-  var holodeckCommandMouseDown = function (command, targetable) {
+  var holodeckCommandMouseDown = function (command) {
     return function (mdevent) {
       if (mdevent.button === LeftButton || mdevent.button === RightButton) {
-        model.commandModeDown(mdevent, command, targetable)
+        model.commandModeDown(mdevent, command)
         return true;
       }
     };
@@ -473,9 +467,8 @@
 
   for (var i = 0; i < model.commands().length; ++i) {
     var command = model.commands()[i];
-    var targetable = model.targetableCommands()[i];
     model.holodeckModeMouseDown['command_' + command] =
-      holodeckCommandMouseDown(command, targetable);
+      holodeckCommandMouseDown(command);
   }
 
   model.holodeckMouseDown = function (mdevent) {
