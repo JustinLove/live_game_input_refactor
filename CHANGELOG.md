@@ -4,6 +4,7 @@
   - Account for scaled ui
   - Command mode right click is action instead of cancel
   - Command mode no longer cares whether a command is targetable
+  - Append/Exit are evaluated based on last event, not first
 
 # 0.1.1
 
