@@ -321,7 +321,7 @@
   }
 
   model.commandModeDown = function(mdevent, command, targetable) {
-    engine.call('camera.cameraMaybeSetFocusPlanet');
+    api.camera.maybeSetFocusPlanet()
     var holodeck = mdevent.holodeck
     var startx = mdevent.offsetX;
     var starty = mdevent.offsetY;
@@ -464,11 +464,8 @@
 
   var holodeckCommandMouseDown = function (command, targetable) {
     return function (mdevent) {
-      if (mdevent.button === LeftButton) {
+      if (mdevent.button === LeftButton || mdevent.button === RightButton) {
         model.commandModeDown(mdevent, command, targetable)
-        return true;
-      } else if (mdevent.button === RightButton) {
-        model.endCommandMode()
         return true;
       }
     };

@@ -1,6 +1,7 @@
 # 0.1.2
 
 - Account for scaled ui
+- Command mode right click is action instead of cancel
 
 # 0.1.1
 
