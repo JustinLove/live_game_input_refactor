@@ -1,5 +1,9 @@
 # Live Game Input Refactor
 
+## 1.0.0
+
+- Namespace all new functions under lgir
+
 ## 0.1.2
 
 - Updates from game:

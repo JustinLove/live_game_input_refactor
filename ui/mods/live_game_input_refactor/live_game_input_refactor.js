@@ -1,25 +1,27 @@
-(function() {
-  model.uiScale = api.settings.getSynchronous('ui', 'ui_scale') || 1.0;
+window.lgir = window.lgir || {}
+
+;(function() {
+  lgir.uiScale = api.settings.getSynchronous('ui', 'ui_scale') || 1.0;
 
   live_game_settings_exit = handlers['settings.exit']
   handlers['settings.exit'] = function() {
     live_game_settings_exit()
-    model.uiScale = api.settings.getSynchronous('ui', 'ui_scale') || 1.0;
+    lgir.uiScale = api.settings.getSynchronous('ui', 'ui_scale') || 1.0;
   };
 
-  model.scaleMouseEvent = model.scaleMouseEvent || function (mdevent) {
+  lgir.scaleMouseEvent = lgir.scaleMouseEvent || function (mdevent) {
     if (mdevent.uiScaled)
       return;
 
     mdevent.uiScaled = true;
 
-    mdevent.offsetX = Math.floor(mdevent.offsetX * model.uiScale);
-    mdevent.offsetY = Math.floor(mdevent.offsetY * model.uiScale);
-    mdevent.clientX = Math.floor(mdevent.clientX * model.uiScale);
-    mdevent.clientY = Math.floor(mdevent.clientY * model.uiScale);
+    mdevent.offsetX = Math.floor(mdevent.offsetX * lgir.uiScale);
+    mdevent.offsetY = Math.floor(mdevent.offsetY * lgir.uiScale);
+    mdevent.clientX = Math.floor(mdevent.clientX * lgir.uiScale);
+    mdevent.clientY = Math.floor(mdevent.clientY * lgir.uiScale);
   };
 
-  model.registerSelectionChangeFrom = function(prevSelection) {
+  lgir.registerSelectionChangeFrom = function(prevSelection) {
     return function (selection) {
       if (!selection) return null
 
@@ -30,7 +32,7 @@
     }
   }
 
-  model.draggableCommand = function(mdevent, delay, responders) {
+  lgir.draggableCommand = function(mdevent, delay, responders) {
     var dragTime = new Date().getTime() + delay;
     var dragging = false
     var polling = true
@@ -45,7 +47,7 @@
     }
 
     input.capture(mdevent.holodeck.div, function (event) {
-      model.scaleMouseEvent(event)
+      lgir.scaleMouseEvent(event)
 
       event.holodeck = mdevent.holodeck
       //if (model.showTimeControls())
@@ -71,7 +73,7 @@
     });
   }
 
-  model.captureFormationFacing = function(mdevent, muevent,
+  lgir.captureFormationFacing = function(mdevent, muevent,
                                           command, shouldAppend, onExit) {
     mdevent.holodeck.unitChangeCommandState(command,
         muevent.offsetX, muevent.offsetY, shouldAppend(muevent))
@@ -80,14 +82,14 @@
         return;
 
       input.capture(mdevent.holodeck.div, function (event) {
-        model.scaleMouseEvent(event)
+        lgir.scaleMouseEvent(event)
         event.holodeck = mdevent.holodeck
 
         if ((event.type === 'mousedown') && (event.button === mdevent.button)) {
           input.release();
           mdevent.holodeck.unitEndCommand(command,
               event.offsetX, event.offsetY, shouldAppend(event))
-            .then(model.playCommandSound(event, command))
+            .then(lgir.playCommandSound(event, command))
           onExit('complete', event)
         }
         else if ((event.type === 'keydown') && (event.keyCode === keyboard.esc)) {
@@ -99,7 +101,7 @@
     });
   }
 
-  model.playCommandSound = function(event, command) {
+  lgir.playCommandSound = function(event, command) {
     return function (success) {
       command = command || success
       event.holodeck.showCommandConfirmation(success ? command : "",
@@ -113,12 +115,12 @@
     };
   }
 
-  model.holdMousePan = function(mdevent) {
+  lgir.holdMousePan = function(mdevent) {
     var oldMode = model.mode();
     model.mode('camera');
     mdevent.holodeck.beginControlCamera();
     input.capture(mdevent.holodeck.div, function (event) {
-      model.scaleMouseEvent(event)
+      lgir.scaleMouseEvent(event)
 
       var mouseDone = ((event.type === 'mouseup') && (event.button === mdevent.button));
       var escKey = ((event.type === 'keydown') && (event.keyCode === keyboard.esc));
@@ -131,34 +133,34 @@
     });
   }
 
-  model.completeFabRotate = function(mdevent, event) {
-    var snap = model.shouldSnap(event)
-    event.holodeck.unitEndFab(event.offsetX, event.offsetY, model.shouldAppendFab(mdevent), snap).then(function (success) {
+  lgir.completeFabRotate = function(mdevent, event) {
+    var snap = lgir.shouldSnap(event)
+    event.holodeck.unitEndFab(event.offsetX, event.offsetY, lgir.shouldAppendFab(mdevent), snap).then(function (success) {
       event.holodeck.showCommandConfirmation("", event.offsetX, event.offsetY);
       if (success)
         api.audio.playSound("/SE/UI/UI_Building_place");
     });
     model.mode('fab');
 
-    model.watchForEnd(event,
-                      model.shouldExitModeFab,
+    lgir.watchForEnd(event,
+                      lgir.shouldExitModeFab,
                       model.fabCount,
                       model.endFabMode)
   }
 
-  model.beginFabDown = function(mdevent) {
+  lgir.beginFabDown = function(mdevent) {
     mdevent.holodeck.unitBeginFab(
       mdevent.offsetX,
       mdevent.offsetY,
-      model.shouldSnap(mdevent))
+      lgir.shouldSnap(mdevent))
 
     model.mode('fab_rotate');
     input.capture(mdevent.holodeck.div, function (event) {
-      model.scaleMouseEvent(event)
+      lgir.scaleMouseEvent(event)
       event.holodeck = mdevent.holodeck
       if ((event.type === 'mouseup') && (event.button === mdevent.button)) {
         input.release();
-        model.completeFabRotate(mdevent, event)
+        lgir.completeFabRotate(mdevent, event)
       }
       else if ((event.type === 'keydown') && (event.keyCode === keyboard.esc)) {
         input.release();
@@ -168,12 +170,12 @@
     });
   }
 
-  model.celestialTargetDown = function(mdevent) {
+  lgir.celestialTargetDown = function(mdevent) {
     if (model.celestialControlModel.findingTargetPlanet()) {
       model.celestialControlModel.mousedown(mdevent);
 
       input.capture($('body'), function (event) {
-        model.scaleMouseEvent(event)
+        lgir.scaleMouseEvent(event)
         if (event.type === 'mouseup' && event.button === mdevent.button) {
           model.celestialControlModel.mouseup(event);
           input.release();
@@ -182,7 +184,7 @@
     }
   }
 
-  model.selectSingleClick = function(mdevent) {
+  lgir.selectSingleClick = function(mdevent) {
     var holodeck = mdevent.holodeck
     var startx = mdevent.offsetX;
     var starty = mdevent.offsetY;
@@ -192,18 +194,18 @@
     delete holodeck.doubleClickId;
     model.mode('select');
 
-    model.draggableCommand(mdevent, 0, {
+    lgir.draggableCommand(mdevent, 0, {
       start: function(event) {
         holodeck.beginDragSelect(startx, starty);
       },
       end: function(event) {
-        var option = model.getSelectOption(event);
+        var option = lgir.getSelectOption(event);
         holodeck.endDragSelect(option, {
           left: startx,
           top: starty,
           right: event.offsetX,
           bottom: event.offsetY
-        }).then(model.registerSelectionChangeFrom(prevSelection))
+        }).then(lgir.registerSelectionChangeFrom(prevSelection))
 
         model.mode('default');
       },
@@ -211,9 +213,9 @@
         if (model.hasWorldHoverTarget())
           holodeck.doubleClickId = model.worldHoverTarget();
         var index = (holodeck.clickOffset || 0);
-        var option = model.getSelectOption(event);
+        var option = lgir.getSelectOption(event);
         holodeck.selectAt(option, startx, starty, index)
-          .then(model.registerSelectionChangeFrom(prevSelection))
+          .then(lgir.registerSelectionChangeFrom(prevSelection))
           .then(function (selection) {
             if (selection && selection.selectionResult) {
               holodeck.doubleClickId = selection.selectionResult[0];
@@ -234,39 +236,39 @@
     })
   }
 
-  model.selectDoubleClick = function(mdevent) {
+  lgir.selectDoubleClick = function(mdevent) {
     if (mdevent.holodeck.hasOwnProperty('doubleClickId')) {
       mdevent.holodeck.selectMatchingUnits(
-          model.getSelectOption(mdevent),
+          lgir.getSelectOption(mdevent),
           [mdevent.holodeck.doubleClickId])
-        .then(model.registerSelectionChangeFrom(model.selection()))
+        .then(lgir.registerSelectionChangeFrom(model.selection()))
       delete mdevent.holodeck.doubleClickId;
     }
   }
 
-  model.selectDown = function(mdevent) {
+  lgir.selectDown = function(mdevent) {
     var now = new Date().getTime();
     if (now < mdevent.holodeck.doubleClickTime) {
-      model.selectDoubleClick(mdevent)
+      lgir.selectDoubleClick(mdevent)
 
       delete mdevent.holodeck.doubleClickTime;
     }
     else {
       mdevent.holodeck.doubleClickTime = now + 250;
 
-      model.selectSingleClick(mdevent)
+      lgir.selectSingleClick(mdevent)
     }
   }
 
-  model.standardDown = function(mdevent) {
+  lgir.standardDown = function(mdevent) {
     if (model.celestialControlActive()) {
-      model.celestialTargetDown(mdevent)
+      lgir.celestialTargetDown(mdevent)
     } else {
-      model.selectDown(mdevent)
+      lgir.selectDown(mdevent)
     }
   }
 
-  model.contextualActionDown = function(mdevent) {
+  lgir.contextualActionDown = function(mdevent) {
     if (model.showTimeControls()) return false
     if (model.celestialControlActive()) return false
 
@@ -276,7 +278,7 @@
 
     var dragCommand = "";
 
-    model.draggableCommand(mdevent, 75, {
+    lgir.draggableCommand(mdevent, 75, {
       start: function(event, setDragging, cancelDragging) {
         holodeck.unitBeginGo(startx, starty, model.allowCustomFormations()).then( function(ok) {
           dragCommand = ok;
@@ -290,23 +292,23 @@
       },
       end: function(event) {
         if (dragCommand === 'move') {
-          model.captureFormationFacing(mdevent, event, 'move',
-                                      model.shouldAppendContext,
+          lgir.captureFormationFacing(mdevent, event, 'move',
+                                      lgir.shouldAppendContext,
                                       function() {model.mode('default')})
         } else {
-          var append = model.shouldAppendContext(event)
+          var append = lgir.shouldAppendContext(event)
           holodeck.unitEndCommand(dragCommand,
               event.offsetX, event.offsetY, append)
-            .then(model.playCommandSound(event, dragCommand))
+            .then(lgir.playCommandSound(event, dragCommand))
 
           // not in vanilla, but we had to set mode to get here
           model.mode('default');
         }
       },
       click: function(event) {
-        var append = model.shouldAppendContext(event)
+        var append = lgir.shouldAppendContext(event)
         holodeck.unitGo(startx, starty, append)
-          .then(model.playCommandSound(mdevent, null))
+          .then(lgir.playCommandSound(mdevent, null))
         model.mode('default');
       },
       cancel: function(event) {
@@ -318,64 +320,64 @@
     return true;
   }
 
-  model.commandModeDown = function(mdevent, command) {
+  lgir.commandModeDown = function(mdevent, command) {
     api.camera.maybeSetFocusPlanet()
     var holodeck = mdevent.holodeck
     var startx = mdevent.offsetX;
     var starty = mdevent.offsetY;
 
     if (!model.allowCustomFormations() && (command === 'move' || command === 'unload')) {
-      var append = model.shouldAppendCommand(mdevent)
+      var append = lgir.shouldAppendCommand(mdevent)
       holodeck.unitCommand(command, mdevent.offsetX, mdevent.offsetY, append)
-        .then(model.playCommandSound(mdevent, command));
+        .then(lgir.playCommandSound(mdevent, command));
 
-      model.watchForEnd(mdevent,
-                        model.shouldExitModeCommand,
+      lgir.watchForEnd(mdevent,
+                        lgir.shouldExitModeCommand,
                         model.cmdQueueCount,
                         model.endCommandMode)
       return
     }
 
-    model.completeFormationCommand = function(reason, lastEvent) {
+    lgir.completeFormationCommand = function(reason, lastEvent) {
       if (reason == 'escape') {
         model.endCommandMode()
       } else {
-        model.watchForEnd(lastEvent,
-                          model.shouldExitModeCommand,
+        lgir.watchForEnd(lastEvent,
+                          lgir.shouldExitModeCommand,
                           model.cmdQueueCount,
                           model.endCommandMode)
       }
     }
 
-    model.draggableCommand(mdevent, 125, {
+    lgir.draggableCommand(mdevent, 125, {
       start: function(event, setDragging) {
         holodeck.unitBeginCommand(command, startx, starty).then(setDragging);
       },
       end: function(event) {
 
         if ((command === 'move' || command === 'unload')) {
-          model.captureFormationFacing(mdevent, event, command,
-                                       model.shouldAppendCommand,
-                                       model.completeFormationCommand)
+          lgir.captureFormationFacing(mdevent, event, command,
+                                       lgir.shouldAppendCommand,
+                                       lgir.completeFormationCommand)
         }
         else {
-          var append = model.shouldAppendCommand(event)
+          var append = lgir.shouldAppendCommand(event)
           holodeck.unitEndCommand(command,
               event.offsetX, event.offsetY, append)
-            .then(model.playCommandSound(event, command))
-          model.watchForEnd(event,
-                            model.shouldExitModeCommand,
+            .then(lgir.playCommandSound(event, command))
+          lgir.watchForEnd(event,
+                            lgir.shouldExitModeCommand,
                             model.cmdQueueCount,
                             model.endCommandMode)
         }
       },
       click: function(event) {
-        var append = model.shouldAppendCommand(event)
+        var append = lgir.shouldAppendCommand(event)
         holodeck.unitCommand(command, mdevent.offsetX, mdevent.offsetY, append)
-          .then(model.playCommandSound(mdevent, command));
+          .then(lgir.playCommandSound(mdevent, command));
 
-        model.watchForEnd(event,
-                          model.shouldExitModeCommand,
+        lgir.watchForEnd(event,
+                          lgir.shouldExitModeCommand,
                           model.cmdQueueCount,
                           model.endCommandMode)
       },
@@ -386,7 +388,7 @@
     })
   }
 
-  model.getSelectOption = function(event) {
+  lgir.getSelectOption = function(event) {
     if (event.shiftKey)
     {
       if (event.ctrlKey)
@@ -400,28 +402,28 @@
       return '';
   };
 
-  model.endWatchEvent = 'keyup'
+  lgir.endWatchEvent = 'keyup'
 
-  model.shouldAppendFab = function(event) {
+  lgir.shouldAppendFab = function(event) {
     return event.shiftKey
   }
-  model.shouldExitModeFab = function(event) {
+  lgir.shouldExitModeFab = function(event) {
     return !event.shiftKey
   }
 
-  model.shouldAppendContext = function(event) {
+  lgir.shouldAppendContext = function(event) {
     return event.shiftKey
   }
   //no exit, context isn't a mode
 
-  model.shouldAppendCommand = function(event) {
+  lgir.shouldAppendCommand = function(event) {
     return event.shiftKey
   }
-  model.shouldExitModeCommand = function(event) {
+  lgir.shouldExitModeCommand = function(event) {
     return !event.shiftKey
   }
 
-  model.watchForEnd = function(event, shouldExit, counter, onEnd) {
+  lgir.watchForEnd = function(event, shouldExit, counter, onEnd) {
     counter(counter() + 1);
     if (shouldExit(event)) {
       onEnd()
@@ -429,28 +431,28 @@
       var endWatch = function (keyEvent) {
         if (shouldExit(keyEvent)) {
           //console.log('remove watcher')
-          $('body').off(model.endWatchEvent, endWatch);
+          $('body').off(lgir.endWatchEvent, endWatch);
           onEnd()
         }
       };
       //console.log('install watcher')
-      $('body').on(model.endWatchEvent, endWatch);
+      $('body').on(lgir.endWatchEvent, endWatch);
     }
   }
 
-  model.shouldSnap = function(event) {
+  lgir.shouldSnap = function(event) {
     return !event.ctrlKey
   }
 
-  model.holodeckModeMouseDown = {};
+  lgir.holodeckModeMouseDown = {};
 
   var LeftButton = 0
   var MiddleButton = 1
   var RightButton = 2
 
-  model.holodeckModeMouseDown.fab = function (mdevent) {
+  lgir.holodeckModeMouseDown.fab = function (mdevent) {
     if (mdevent.button === LeftButton) {
-      model.beginFabDown(mdevent)
+      lgir.beginFabDown(mdevent)
       return true;
     }
     else if (mdevent.button === RightButton) {
@@ -460,13 +462,13 @@
     return false;
   };
 
-  model.holodeckModeMouseDown['default'] = function (mdevent) {
+  lgir.holodeckModeMouseDown['default'] = function (mdevent) {
     if (mdevent.button === LeftButton) {
-      model.standardDown(mdevent)
+      lgir.standardDown(mdevent)
       return true;
     }
     else if (mdevent.button === RightButton) {
-      return model.contextualActionDown(mdevent)
+      return lgir.contextualActionDown(mdevent)
     }
     return false;
   };
@@ -474,7 +476,7 @@
   var holodeckCommandMouseDown = function (command) {
     return function (mdevent) {
       if (mdevent.button === LeftButton || mdevent.button === RightButton) {
-        model.commandModeDown(mdevent, command)
+        lgir.commandModeDown(mdevent, command)
         return true;
       }
     };
@@ -482,15 +484,15 @@
 
   for (var i = 0; i < model.commands().length; ++i) {
     var command = model.commands()[i];
-    model.holodeckModeMouseDown['command_' + command] =
+    lgir.holodeckModeMouseDown['command_' + command] =
       holodeckCommandMouseDown(command);
   }
 
-  model.holodeckMouseDown = function (mdevent) {
-    model.scaleMouseEvent(mdevent)
+  lgir.holodeckMouseDown = function (mdevent) {
+    lgir.scaleMouseEvent(mdevent)
     mdevent.holodeck = api.Holodeck.get(this);
 
-    var handler = model.holodeckModeMouseDown[model.mode()];
+    var handler = lgir.holodeckModeMouseDown[model.mode()];
     if (handler && handler(mdevent)) {
       mdevent.preventDefault();
       mdevent.stopPropagation();
@@ -498,7 +500,7 @@
     }
 
     if (mdevent.button === MiddleButton) {
-      model.holdMousePan(mdevent)
+      lgir.holdMousePan(mdevent)
       mdevent.preventDefault();
       mdevent.stopPropagation();
       return;
@@ -519,7 +521,7 @@
       return;
 
     //var t1 = new Date().getTime()
-    model.holodeckMouseDown.apply(this, arguments)
+    lgir.holodeckMouseDown.apply(this, arguments)
     //var t2 = new Date().getTime()
     //console.log(t2 - t1)
   });
