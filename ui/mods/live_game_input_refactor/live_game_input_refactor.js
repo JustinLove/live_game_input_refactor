@@ -1,6 +1,8 @@
 window.lgir = window.lgir || {}
 
 ;(function() {
+  // ------------- Support Functions ----------
+
   lgir.uiScale = api.settings.getSynchronous('ui', 'ui_scale') || 1.0;
 
   live_game_settings_exit = handlers['settings.exit']
@@ -31,6 +33,22 @@ window.lgir = window.lgir || {}
       return jSelection;
     }
   }
+
+  lgir.playCommandSound = function(event, command) {
+    return function (success) {
+      command = command || success
+      event.holodeck.showCommandConfirmation(success ? command : "",
+                                       event.offsetX, event.offsetY);
+      if (!success || (command === 'move')) {
+        // Note: move currently plays its own sound.
+        return;
+      }
+      var action = command.charAt(0).toUpperCase() + command.slice(1);
+      api.audio.playSound("/SE/UI/UI_Command_" + action);
+    };
+  }
+
+  // ------------- Multi-stage Command Parts ----------
 
   lgir.draggableCommand = function(mdevent, delay, responders) {
     var dragTime = new Date().getTime() + delay;
@@ -101,19 +119,7 @@ window.lgir = window.lgir || {}
     });
   }
 
-  lgir.playCommandSound = function(event, command) {
-    return function (success) {
-      command = command || success
-      event.holodeck.showCommandConfirmation(success ? command : "",
-                                       event.offsetX, event.offsetY);
-      if (!success || (command === 'move')) {
-        // Note: move currently plays its own sound.
-        return;
-      }
-      var action = command.charAt(0).toUpperCase() + command.slice(1);
-      api.audio.playSound("/SE/UI/UI_Command_" + action);
-    };
-  }
+  // -------------- Button Functions -----------------
 
   lgir.holdMousePan = function(mdevent) {
     var oldMode = model.mode();
@@ -320,6 +326,17 @@ window.lgir = window.lgir || {}
     return true;
   }
 
+  lgir.completeFormationCommand = function(reason, lastEvent) {
+    if (reason == 'escape') {
+      model.endCommandMode()
+    } else {
+      lgir.watchForEnd(lastEvent,
+                        lgir.shouldExitModeCommand,
+                        model.cmdQueueCount,
+                        model.endCommandMode)
+    }
+  }
+
   lgir.commandModeDown = function(mdevent, command) {
     api.camera.maybeSetFocusPlanet()
     var holodeck = mdevent.holodeck
@@ -336,17 +353,6 @@ window.lgir = window.lgir || {}
                         model.cmdQueueCount,
                         model.endCommandMode)
       return
-    }
-
-    lgir.completeFormationCommand = function(reason, lastEvent) {
-      if (reason == 'escape') {
-        model.endCommandMode()
-      } else {
-        lgir.watchForEnd(lastEvent,
-                          lgir.shouldExitModeCommand,
-                          model.cmdQueueCount,
-                          model.endCommandMode)
-      }
     }
 
     lgir.draggableCommand(mdevent, 125, {
@@ -387,6 +393,8 @@ window.lgir = window.lgir || {}
       },
     })
   }
+
+  // ---------------- Modifier Keys -----------
 
   lgir.getSelectOption = function(event) {
     if (event.shiftKey)
@@ -443,6 +451,8 @@ window.lgir = window.lgir || {}
   lgir.shouldSnap = function(event) {
     return !event.ctrlKey
   }
+
+  // ---------------- Modal Response/Button Routing -----------
 
   lgir.holodeckModeMouseDown = {};
 
