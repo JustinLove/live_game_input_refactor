@@ -1,6 +1,6 @@
 # Live Game Input Refactor
 
-Replaces big knarly mouse functions with small moddable ones.
+Framework to make mouse mods easier. Replaces big knarly mouse functions with small moddable ones.
 
 I'm not entirely happy with the initial way functions fell apart; it might need to be redone someday.
 
