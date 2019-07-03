@@ -24,7 +24,7 @@ Modal routing primarily calls into this group.  Select, contextual action (stand
 
 ### Multi-Stage Command Parts
 
-Extracted drag and formation as re-usable functions. Formation is probably still crashing (and thus the extraction is essentially untested), but this mod aims for parity with vanilla.
+Extracted drag and formation facing as re-usable functions. Formation facing is probably still crashing (and thus the extraction is essentially untested), but this mod aims for parity with vanilla.
 
 ### Support Functions
 

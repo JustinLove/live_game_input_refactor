@@ -1,12 +1,13 @@
 {
   "author": "wondible",
-  "build": "88288",
-  "category": ["ui", "framework"],
+  "build": "113410",
+  "category": ["framework"],
   "context": "client",
-  "date": "2015/10/03",
+  "date": "2019/07/03",
   "description": "Framework to make mouse mods easier.",
   "display_name": "Live Game Input Refactor",
   "forum": "https://forums.uberent.com/threads/rel-live-game-input-refactor.70614/",
+  "framework": true,
   "identifier": "com.wondible.pa.live_game_input_refactor",
   "priority": 90,
   "scenes": {
@@ -15,6 +16,6 @@
     ]
   },
   "signature": "not yet implemented",
-  "version": "1.0.1"
+  "version": "1.1.0"
 }
 

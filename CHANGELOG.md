@@ -1,5 +1,10 @@
 # Live Game Input Refactor
 
+## 1.1.0
+
+- Change drag behavior to support base game line formations
+- Add framework flag to modinfo
+
 ## 1.0.1
 
 - Readme updates, forum url

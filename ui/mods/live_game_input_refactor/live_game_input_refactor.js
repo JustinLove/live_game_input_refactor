@@ -292,24 +292,18 @@ window.lgir = window.lgir || {}
             model.mode("command_" + dragCommand);
             setDragging(true)
           } else {
-            cancelDragging()
+            setDragging(false)
           }
         } );
       },
       end: function(event) {
-        if (dragCommand === 'move') {
-          lgir.captureFormationFacing(mdevent, event, 'move',
-                                      lgir.shouldAppendContext,
-                                      function() {model.mode('default')})
-        } else {
-          var append = lgir.shouldAppendContext(event)
-          holodeck.unitEndCommand(dragCommand,
-              event.offsetX, event.offsetY, append)
-            .then(lgir.playCommandSound(event, dragCommand))
+        var append = lgir.shouldAppendContext(event)
+        holodeck.unitEndCommand(dragCommand,
+            event.offsetX, event.offsetY, append)
+          .then(lgir.playCommandSound(event, dragCommand))
 
-          // not in vanilla, but we had to set mode to get here
-          model.mode('default');
-        }
+        // not in vanilla, but we had to set mode to get here
+        model.mode('default');
       },
       click: function(event) {
         var append = lgir.shouldAppendContext(event)
@@ -360,22 +354,14 @@ window.lgir = window.lgir || {}
         holodeck.unitBeginCommand(command, startx, starty).then(setDragging);
       },
       end: function(event) {
-
-        if ((command === 'move' || command === 'unload')) {
-          lgir.captureFormationFacing(mdevent, event, command,
-                                       lgir.shouldAppendCommand,
-                                       lgir.completeFormationCommand)
-        }
-        else {
-          var append = lgir.shouldAppendCommand(event)
-          holodeck.unitEndCommand(command,
-              event.offsetX, event.offsetY, append)
-            .then(lgir.playCommandSound(event, command))
-          lgir.watchForEnd(event,
-                            lgir.shouldExitModeCommand,
-                            model.cmdQueueCount,
-                            model.endCommandMode)
-        }
+        var append = lgir.shouldAppendCommand(event)
+        holodeck.unitEndCommand(command,
+            event.offsetX, event.offsetY, append)
+          .then(lgir.playCommandSound(event, command))
+        lgir.watchForEnd(event,
+                          lgir.shouldExitModeCommand,
+                          model.cmdQueueCount,
+                          model.endCommandMode)
       },
       click: function(event) {
         var append = lgir.shouldAppendCommand(event)
