@@ -1,5 +1,9 @@
 # Live Game Input Refactor
 
+## 1.1.1
+
+- Drag gesture precludes a following click from being counted as a double click (with the standard lgir double click detection)
+
 ## 1.1.0
 
 - Change drag behavior to support base game line formations
