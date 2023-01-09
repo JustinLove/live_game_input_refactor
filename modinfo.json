@@ -1,9 +1,9 @@
 {
   "author": "wondible",
-  "build": "115013",
+  "build": "116400",
   "category": ["framework"],
   "context": "client",
-  "date": "2020/11/02",
+  "date": "2023/01/08",
   "description": "Framework to make mouse mods easier.",
   "display_name": "Live Game Input Refactor",
   "forum": "https://forums.uberent.com/threads/rel-live-game-input-refactor.70614/",
@@ -16,6 +16,6 @@
     ]
   },
   "signature": "not yet implemented",
-  "version": "1.1.1"
+  "version": "1.1.2"
 }
 

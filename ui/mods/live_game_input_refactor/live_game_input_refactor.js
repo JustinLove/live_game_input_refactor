@@ -284,10 +284,21 @@ window.lgir = window.lgir || {}
     var starty = mdevent.offsetY;
 
     var dragCommand = "";
+    var ended = false
+
+    function click(event) {
+      var append = lgir.shouldAppendContext(event)
+      holodeck.unitGo(startx, starty, append)
+        .then(lgir.playCommandSound(mdevent, null))
+      model.mode('default');
+    }
 
     lgir.draggableCommand(mdevent, 75, {
       start: function(event, setDragging, cancelDragging) {
         holodeck.unitBeginGo(startx, starty, model.allowCustomFormations()).then( function(ok) {
+          // unitBeginGo is async, so we can receive a mouseup in the meatime
+          // draggableCommand sets dragging status, which we have not yet confirmed, so the mouseup results in an 'end' callback instead of 'click'
+          if (ended) return click(event)
           dragCommand = ok;
           if (dragCommand) {
             model.mode("command_" + dragCommand);
@@ -303,15 +314,11 @@ window.lgir = window.lgir || {}
             event.offsetX, event.offsetY, append)
           .then(lgir.playCommandSound(event, dragCommand))
 
+        ended = true
         // not in vanilla, but we had to set mode to get here
         model.mode('default');
       },
-      click: function(event) {
-        var append = lgir.shouldAppendContext(event)
-        holodeck.unitGo(startx, starty, append)
-          .then(lgir.playCommandSound(mdevent, null))
-        model.mode('default');
-      },
+      click: click,
       cancel: function(event) {
         holodeck.unitCancelCommand();
         model.mode('default');

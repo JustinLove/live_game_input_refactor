@@ -1,5 +1,9 @@
 # Live Game Input Refactor
 
+## 1.1.2
+
+- Fix right click not begin recongized when a drag is long enough to generate a move event but not long enough for the game to register a drag gesture.
+
 ## 1.1.1
 
 - Drag gesture precludes a following click from being counted as a double click (with the standard lgir double click detection)
