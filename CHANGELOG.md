@@ -2,7 +2,7 @@
 
 ## 1.1.2
 
-- Fix right click not begin recongized when a drag is long enough to generate a move event but not long enough for the game to register a drag gesture.
+- Fix right click not begin recognized when a drag is long enough to generate a move event but not long enough for the game to register a drag gesture.
 
 ## 1.1.1
 
